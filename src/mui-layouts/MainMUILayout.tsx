@@ -1,11 +1,11 @@
 import type React from "react";
-import { ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 // themes
 import { lightTheme, darkTheme } from './theme';
-import { useSelector } from "react-redux";
 import { selectIsDarkMode } from "../features/settings/settingsSlice";
+import { useAppSelector } from "../app/hooks";
 
 
 interface MainMUILayoutProps {
@@ -16,7 +16,7 @@ interface MainMUILayoutProps {
 const MainMUILayout = ( { children }: MainMUILayoutProps ) => {
 
    // Redux
-   const isDarkMode = useSelector(selectIsDarkMode);
+   const isDarkMode = useAppSelector(selectIsDarkMode);
 
    
    // MUI data
@@ -29,6 +29,7 @@ const MainMUILayout = ( { children }: MainMUILayoutProps ) => {
    return (
       <CacheProvider value={ltrCache} >
          <ThemeProvider theme={theme} >
+            <CssBaseline />      
             {
                children
             }

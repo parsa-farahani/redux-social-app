@@ -1,7 +1,43 @@
-import React, { useState } from "react";
-import { AppBar, Box, FormGroup, IconButton, Menu, MenuItem, Toolbar, Typography, useTheme } from "@mui/material";
+import { useState } from "react";
+import type React from "react";
+import { styled, AppBar, Box, Button, FormGroup, IconButton, Menu, MenuItem, Toolbar, Typography, useTheme, useMediaQuery, Container } from "@mui/material";
 import { MdAccountCircle } from 'react-icons/md';
-import { IoIosMenu } from 'react-icons/io';
+import { IoIosMenu, IoMdMoon, IoMdThermometer } from 'react-icons/io';
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { selectIsDarkMode, toggleDarkMode } from "../../features/settings/settingsSlice";
+import { RiSunFill } from "react-icons/ri";
+import { BsMoonStarsFill } from "react-icons/bs";
+import { Link, NavLink } from "react-router-dom";
+import asteroidImg from '../../assets/images/asteroid/asteroid-icon.svg';
+import { HeaderNavLink } from "./Header.styles";
+
+
+const navLinksData = [
+   {
+      title: 'Posts',
+      href: '/posts',
+   },
+   {
+      title: 'Users',
+      href: '/users',
+   },
+   {
+      title: 'Test',
+      href: '/test',
+   },
+   {
+      title: 'NotFound',
+      href: '/not-found',
+   },
+   {
+      title: 'Login',
+      href: '/login',
+   },
+];
+
+
+
+
 
 
 const Header = () => {
@@ -9,12 +45,22 @@ const Header = () => {
    const [auth, setAuth] = useState(true);
    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+   // MUI
    const theme = useTheme();
+   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
 
-   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setAuth(event.target.checked);
-   };
 
+   // Redux
+   const dispatch = useAppDispatch();
+   const isDarkMode = useAppSelector(selectIsDarkMode);
+
+
+   const handleToggleDarkMode = () => {
+      dispatch(
+         toggleDarkMode()
+      );
+   }
+   
    const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(event.currentTarget);
    };
@@ -24,22 +70,56 @@ const Header = () => {
    };
 
    return (
-      <header>
-         <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static" sx={{ bgcolor: 'background.paper' }}>
-               <Toolbar>
+      <Box component="header" position="fixed" sx={{ inset: '0 0 auto 0' }}>
+         <Box component="nav" sx={{ flexGrow: 1 }}>
+            <AppBar elevation={0} enableColorOnDark position="static" sx={{ background: (theme.palette.mode === 'dark') ? '#111111aa' : '#eeeeeeaa', backdropFilter: 'blur(15px)', borderBottom: '1px solid transparent' }}>
+               <Container
+                  maxWidth="xl"
+               >
+               <Toolbar >
+                  <Box sx={{ marginInlineEnd: '.75rem' }} >
+                     <Link to="/" >
+                        <img src={asteroidImg} alt="asteroid home" style={{ display: 'inline-block', width: '40px', height: '40px' }} />
+                     </Link>
+                  </Box>
+                  {
+                     (!isMdUp) && (
+                        <IconButton
+                           size="large"
+                           edge="start"
+                           color="inherit"
+                           aria-label="menu"
+                           sx={{ mr: 2 }}
+                        >
+                           <IoIosMenu />
+                        </IconButton>
+                     )
+                  }
+                  <Box sx={{ flexGrow: 1 }}>
+                     {
+                        navLinksData.map(navData => (
+                           <HeaderNavLink key={navData.title} >
+                              <NavLink to={navData.href} >
+                                 { navData.title }
+                              </NavLink>
+                           </HeaderNavLink>
+                        ))
+                     }
+                  </Box>
                   <IconButton
-                     size="large"
-                     edge="start"
-                     color="inherit"
-                     aria-label="menu"
-                     sx={{ mr: 2 }}
+                     onClick={handleToggleDarkMode}
+                     size="medium"
+                     aria-label="toggle dark theme"
+                     sx={{ mr: 1, color: 'text.disabled' }}
                   >
-                     <IoIosMenu />
+                     {
+                        (isDarkMode) ? (
+                           <RiSunFill />
+                        ) : (
+                           <BsMoonStarsFill />
+                        )
+                     }
                   </IconButton>
-                  <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                     Photos
-                  </Typography>
                   {
                      auth && (
                         <div>
@@ -75,9 +155,10 @@ const Header = () => {
                      )
                   }
                </Toolbar>
+               </Container>
             </AppBar>
          </Box>
-      </header>
+      </Box>
    );
 };
 

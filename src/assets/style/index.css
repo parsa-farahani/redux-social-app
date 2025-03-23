@@ -8,7 +8,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background-color: #333;
+  /* background-color: #333; */
 }
 
 body {
@@ -24,4 +24,10 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+
+a:any-link {
+  text-decoration: none;
+  color: inherit;
 }

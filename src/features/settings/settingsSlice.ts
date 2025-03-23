@@ -17,9 +17,15 @@ const settingsSlice = createAppSlice({
    name: 'settings',
    initialState,
    reducers: (create) => ({
+      setDarkMode: create.reducer((state) => {
+         state.isDarkMode = true;
+      }),
+      setLightMode: create.reducer((state) => {
+         state.isDarkMode = false;
+      }),
       toggleDarkMode: create.reducer((state) => {
          state.isDarkMode = !state.isDarkMode;
-      })
+      }),
    })
 });
 
@@ -29,6 +35,8 @@ export const selectIsDarkMode = (state: RootState) => state.settings.isDarkMode;
 
 
 export const {
+   setDarkMode,
+   setLightMode,
    toggleDarkMode,
 } = settingsSlice.actions;
 

@@ -1,11 +1,11 @@
-const Post = () => {
+const Users = () => {
    return (
       <section>
          <h1>
-            Post
+            All Users
          </h1>
       </section>
    );
 }
  
-export default Post;
+export default Users;

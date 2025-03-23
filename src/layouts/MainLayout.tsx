@@ -1,21 +1,23 @@
 import React, { useState } from "react";
 import Header from "../components/header/Header";
+import { Outlet } from "react-router-dom";
+import { Container } from "@mui/material";
+import { HeaderOffset } from "../components/header/Header.styles";
 
 
-interface MainLayoutProps {
-   children: React.ReactNode;
-}
 
-const MainLayout = ( { children }: MainLayoutProps ) => {
+const MainLayout = () => {
 
    return (
       <>
          <Header/>
-         <main>
-            {
-               children
-            }
-         </main>
+         <HeaderOffset />
+         <Container
+            component="main"
+            maxWidth="xl"   
+         >
+            <Outlet />
+         </Container>
          <footer></footer>
       </>
    );
