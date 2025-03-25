@@ -1,10 +1,10 @@
+import MainPageLayout from "../layouts/MainPageLayout";
+
 const Login = () => {
    return (
-      <section>
-         <h1>
-            Login
-         </h1>
-      </section>
+      <MainPageLayout title="Login">
+         
+      </MainPageLayout>
    );
 }
  

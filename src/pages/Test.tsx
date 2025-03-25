@@ -1,11 +1,16 @@
 import { Box, Container, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import Spinner from "../components/loading/spinner/Spinner";
 
 
 
 const Test = () => {
+
    return (
       <Box className="App">
+         <Spinner />
+         <Spinner variant="block" />
+         
          <Container
             maxWidth='xl'
          >

@@ -1,5 +1,5 @@
 // style
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigation } from "react-router-dom";
 import "./assets/style/App.css";
 import MainMUILayout from "./mui-layouts/MainMUILayout";
 import MainLayout from "./layouts/MainLayout";
@@ -16,12 +16,20 @@ import {
 } from "./pages";
 import { useEffect } from "react";
 import { useAppDispatch } from "./app/hooks";
-import { useMediaQuery, useTheme } from "@mui/material";
+import { Fab, useMediaQuery, useTheme } from "@mui/material";
 import { setDarkMode, setLightMode } from "./features/settings/settingsSlice";
 import PageContainer from "./containers/PageContainer";
 import { title } from "process";
+import ErrorTest from "./pages/ErrorTest";
+import { IoMdAdd } from "react-icons/io";
+import { MdLibraryAdd } from "react-icons/md";
+
+
+
 
 const App = () => {
+
+
    // MUI
    const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
 
@@ -42,7 +50,15 @@ const App = () => {
          <MainMUILayout>
             <Routes>
                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<Navigate to="/test" />} />
+                  <Route index element={<Navigate to="/posts" />} />
+                  <Route
+                     path="/error-test"
+                     element={
+                        <PageContainer title="Error Test Page">
+                           <ErrorTest />
+                        </PageContainer>
+                     }
+                  />
                   <Route
                      path="/test"
                      element={
@@ -118,6 +134,11 @@ const App = () => {
                   <Route path="*" element={<Navigate to="/not-found" />} />
                </Route>
             </Routes>
+            <Fab size="large" color="primary" aria-label="add" sx={{ bgcolor: "primary.light", fontSize: '1.2rem', position: 'absolute', left: '50%', bottom: '4rem', width: '70px', height: '70px' }}>
+               <Link to='/add-post' style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: '1.8rem' }} >
+                  <MdLibraryAdd />
+               </Link>
+            </Fab>
          </MainMUILayout>
       </>
    );
