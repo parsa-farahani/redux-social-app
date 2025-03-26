@@ -47,12 +47,18 @@ const MainPageLayout = ({ title, children=null }: MainPageLayoutProps) => {
                               borderRadius: 'inherit',
                               background: `
                                  linear-gradient(
-                                    to top,
+                                    -10deg,
                                     ${pink[700]},
                                     15%,
                                     ${blue[500]},
-                                    70%,
-                                    transparent 80%,
+                                    40%,
+                                    transparent 50%,
+                                    transparent
+                                 ),
+                                 radial-gradient(
+                                    30px circle at 0% 70%,
+                                    ${pink[500]},
+                                    ${purple[800]},
                                     transparent
                                  )
                               `,
