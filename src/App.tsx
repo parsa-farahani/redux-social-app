@@ -134,11 +134,6 @@ const App = () => {
                   <Route path="*" element={<Navigate to="/not-found" />} />
                </Route>
             </Routes>
-            <Fab size="large" color="primary" aria-label="add" sx={{ bgcolor: "primary.light", fontSize: '1.2rem', position: 'absolute', left: '50%', bottom: '4rem', width: '70px', height: '70px' }}>
-               <Link to='/add-post' style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: '1.8rem' }} >
-                  <MdLibraryAdd />
-               </Link>
-            </Fab>
          </MainMUILayout>
       </>
    );
