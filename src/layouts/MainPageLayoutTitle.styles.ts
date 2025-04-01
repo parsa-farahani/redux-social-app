@@ -17,6 +17,23 @@ export const MainPageLayoutTitleCont = styled(Box)<MainPageLayoutTitleContProps>
    borderTopLeftRadius: "0",
    borderTopRightRadius: "0",
    overflow: "visible",
+   background: `
+         linear-gradient(
+            -10deg,
+            ${pink[700]},
+            15%,
+            ${blue[500]},
+            40%,
+            transparent 50%,
+            transparent
+         ),
+         radial-gradient(
+            30px circle at 0% 70%,
+            ${teal[300]},
+            ${indigo[300]},
+            transparent
+         )
+   `,
    "&::before": {
       content: '""',
       position: "absolute",
@@ -40,12 +57,13 @@ export const MainPageLayoutTitleCont = styled(Box)<MainPageLayoutTitleContProps>
             transparent
          )
       `,
+      filter: 'blur(10px)',
    },
    "&::after": {
       content: '""',
       position: "absolute",
       zIndex: -1,
-      inset: 0,
+      inset: '2px',
       borderRadius: "inherit",
       background: theme.palette.background.default,
    },
@@ -58,7 +76,8 @@ interface MainPageLayoutTitleCornerProps extends BoxProps {
 
 export const MainPageLayoutTitleLeftCorner = styled(Box)<MainPageLayoutTitleCornerProps>(({ theme }) => ({
    position: "absolute",
-   right: "100%",
+   zIndex: 100,
+   right: 'calc(100% - 2px)',
    width: "60px",
    height: "60px",
    borderRadius: ".5rem",
@@ -66,11 +85,12 @@ export const MainPageLayoutTitleLeftCorner = styled(Box)<MainPageLayoutTitleCorn
    "&::before": {
       content: '""',
       position: "absolute",
+      
       inset: 0,
       borderRadius: "inherit",
       background: `
          linear-gradient(
-         -150deg,
+         -130deg,
             ${blue[800]},
             10%,
             transparent 20%,
@@ -81,15 +101,23 @@ export const MainPageLayoutTitleLeftCorner = styled(Box)<MainPageLayoutTitleCorn
    "&::after": {
       content: '""',
       position: "absolute",
-      inset: "1px",
+      inset: "2px",
       borderRadius: "inherit",
-      background: theme.palette.background.default,
+      background: `
+         linear-gradient(
+            -120deg,
+            ${theme.palette.background.default},
+            5%,
+            transparent 20%,
+            transparent
+         )
+      `,
    },
 }));
 
 export const MainPageLayoutTitleRightCorner = styled(Box)<MainPageLayoutTitleCornerProps>(({ theme }) => ({
    position: "absolute",
-   left: "100%",
+   left: 'calc(100% - 2px)',
    width: "60px",
    height: "60px",
    borderRadius: ".5rem",
@@ -112,8 +140,16 @@ export const MainPageLayoutTitleRightCorner = styled(Box)<MainPageLayoutTitleCor
    "&::after": {
       content: '""',
       position: "absolute",
-      inset: "1px",
+      inset: "2px",
       borderRadius: "inherit",
-      background: theme.palette.background.default,
+      background: `
+         linear-gradient(
+            120deg,
+            ${theme.palette.background.default},
+            5%,
+            transparent 20%,
+            transparent
+         )
+      `,
    },
 }));

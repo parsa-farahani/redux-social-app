@@ -13,61 +13,166 @@ import {
    styled,
    Typography,
    useTheme,
+   Snackbar,
+   Stack,
 } from "@mui/material";
 import { blue, green, pink, red } from "@mui/material/colors";
-import { MdMoreVert } from "react-icons/md";
+import { MdDangerous, MdMoreVert } from "react-icons/md";
 import { FaUserLarge } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { postReactions } from "../../constants/postReactions";
-import MuiCard from '@mui/material/Card';
+import MuiCard from "@mui/material/Card";
 import zIndex from "@mui/material/styles/zIndex";
-
-
+import { PostExcerptCard, PostReactionButtonGroup } from "./PostExcerpt.styles";
+import {
+   addPostReaction,
+   removePostReaction,
+   selectPostById,
+   type Post,
+} from "../../features/posts/postsSlice";
+import PostAuthor from "./PostAuthor";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import ErrorMsg from "../common/error/ErrorMsg";
+import PostReactionButton from "./PostReactionButton";
+import { selectAuthUsername } from "../../features/auth/authSlice";
+import { useState } from "react";
+import { AxiosError } from "axios";
+import { addUserReaction, removeUserReaction, selectUserById, selectUserReactions, type User } from "../../features/users/usersSlice";
 
 interface PostExcerptProps {
-   post: {
-      id: string;
-      title: string;
-      content: string;
-      userId: string;
-      date: string;
-   };
+   postId: string;
    type?: "posts" | "user";
+   authUsername: string | null;
+   // authUser: User;
+   authUserReaction: string | null;
 }
 
-interface PostExcerptCardProps extends CardProps {
-   component?: React.ElementType,
-}
+const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReaction }: PostExcerptProps) => {
+// const PostExcerpt = ({ postId, type = "posts", authUser }: PostExcerptProps) => {
+   // states
+   const [reactionError, setReactionError] = useState<null | string>(null);
+   const [showReactionErrorToast, setShowReactionErrorToast] = useState(false);
 
-const PostExcerptCard = styled(Card)<PostExcerptCardProps>(({ theme }) => ({
-   position: 'relative',
-   borderRadius: '.75rem',
-   // border: `1px solid ${theme.palette.text.disabled}`,
-   // background: `
-   //    ${theme.palette.background.paper}
-   //    linear-gradient(
-   //       -20deg,
-   //       #e91e6320,
-   //       #2196F330
-   //    )
-   // `,
-   // boxShadow: 'none',
-   overflow: 'visible',
-
-   '&::before': {
-      content: '""',
-      position: 'absolute',
-      zIndex: '-1',
-      inset: '20px',
-      borderRadius: 'inherit',
-
-      filter: 'blur(50px)',
-   }
-}));
-
-const PostExcerpt = ({ post, type = "posts" }: PostExcerptProps) => {
    // MUI
    const theme = useTheme();
+
+   // rrd
+   const navigate = useNavigate();
+
+   // redux
+   const dispatch = useAppDispatch();
+   const post = useAppSelector((state) => selectPostById(state, postId));
+   // const authUsername = useAppSelector(selectAuthUsername);
+   // const authUser = useAppSelector(state => selectUserById(state, authUsername!));
+   // const authUserReactions = useAppSelector(state => selectUserReactions(state, authUsername!))
+   
+   const isAuth = Boolean(authUsername) && (authUsername != null);
+
+
+   const handleRemoveReaction = async (reactionName: string) => {
+      if (!isAuth) {
+         // If user hasn't logged in yet, we'll send him/her to '/login' page
+         navigate("/login");
+         return;
+      }
+
+      try {
+   
+         await dispatch(
+            removeUserReaction(
+               {
+                  userId: authUsername,
+                  postId: postId,
+                  reactionName,
+               }
+            )
+         )
+
+      } catch (error) {
+         console.error(error);
+      }
+   }
+
+   const handleAddReaction = async (reactionName: string) => {  // We can also use 'extraReducers' to handle actions of other slices in a slice to write such logic, but I kept the logic here for now (because I need to control the order of requests), and maybe I move some of these logics to the 'extraReducers' of a slice!
+      if (!isAuth) {
+         // If user hasn't logged in yet, we'll send him/her to '/login' page
+         navigate("/login");
+         return;
+      }
+
+
+      if ( authUserReaction === reactionName ) {  // Avoiding reactions more than 'once' (just 1 like/dislike per user)
+         handleRemoveReaction(reactionName);
+         return;
+      }
+
+
+
+      const isOppositeReaction = (
+         (authUserReaction === 'like' && reactionName === 'dislike')
+         || (authUserReaction === 'dislike' && reactionName === 'like')
+      );
+      
+      
+      if (  // If user has changed his/her reaction from like <-> dislike, we should first 'remove' the opposite reaction
+         isOppositeReaction   
+      ) {
+         const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
+
+         try {
+
+            await dispatch(
+               removeUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId,
+                     reactionName: oppositeReactionName,
+                  }
+               )
+            )
+
+            await dispatch(
+               addUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId,
+                     reactionName,
+                  }
+               )
+            )
+   
+         } catch (error) {
+            console.error(error);
+         }
+      } else {
+
+         try {
+   
+            await dispatch(
+               addUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId,
+                     reactionName,
+                  }
+               )
+            )
+   
+         } catch (error) {
+            console.error(error);
+         }
+      }
+      
+   };
+   
+
+   const handleCloseReactionErrorToast = () => {
+      setShowReactionErrorToast(false);
+   }
+
+   if (!post) {
+      return <ErrorMsg text="404 - Not Found the Post!" />;
+   }
 
    return (
       <PostExcerptCard variant="elevation" elevation={4} component="article">
@@ -84,15 +189,25 @@ const PostExcerpt = ({ post, type = "posts" }: PostExcerptProps) => {
                   <MdMoreVert />
                </IconButton>
             }
-            title={type === "posts" && "user name"}
-            subheader={new Date(post.date).toLocaleString()}
+            title={type === "posts" && <PostAuthor userId={post.userId} />}
+            subheader={
+               <Typography
+                  variant="body2"
+                  component="time"
+                  sx={{ color: "text.disabled" }}
+               >
+                  {new Date(post.date).toLocaleString()}
+               </Typography>
+            }
          />
          <CardContent>
             <Typography variant="h5" component="h1" gutterBottom>
                {post.title}
             </Typography>
             <Typography variant="body1" component="p">
-               {post.content.substring(0, 50).concat("...")}
+               {post.content.length > 50
+                  ? post.content.substring(0, 50).concat("...")
+                  : post.content}
             </Typography>
          </CardContent>
          <CardActions>
@@ -108,50 +223,44 @@ const PostExcerpt = ({ post, type = "posts" }: PostExcerptProps) => {
             >
                <Link to={`/posts/${post.id}`}>View Post</Link>
             </Button>
-            <ButtonGroup
-               variant="outlined"
-               aria-label="Basic button group"
+            <PostReactionButtonGroup variant="outlined">
+               {Object.entries(postReactions).map(([reactionName, emoji]) => (
+                  <PostReactionButton
+                     key={reactionName}
+                     onAddReaction={(e: React.MouseEvent<HTMLElement>) =>
+                        handleAddReaction(reactionName)
+                     }
+                     content={
+                        (isAuth && (authUserReaction === reactionName)) ? (
+                           emoji.active
+                        ) : (
+                           emoji.normal
+                        )
+                     }
+                     amount={post.reactions[reactionName]}
+                  />
+               ))}
+            </PostReactionButtonGroup>
+            <Snackbar
+               anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+               open={showReactionErrorToast}
+               autoHideDuration={3000}
+               onClick={handleCloseReactionErrorToast}
+               onClose={handleCloseReactionErrorToast}
+               message={
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                     <MdDangerous />
+                     <Typography>{reactionError}</Typography>
+                  </Stack>
+               }
                sx={{
-                  color: theme.palette.text.secondary,
-                  borderColor: theme.palette.text.disabled,
-                  "& > *": {
-                     color: "inherit !important",
-                     borderColor: "inherit !important",
-                  },
-                  "& *:first-of-type": {
-                     borderRadius: "100vw 0 0 100vw !important",
-                  },
-                  "& *:last-of-type": {
-                     borderRadius: "0 100vw 100vw 0 !important",
+                  fontSize: "1.5rem !important",
+                  "& .MuiPaper-root": {
+                     fontSize: "1.2rem",
+                     bgcolor: red[600],
                   },
                }}
-            >
-               {Object.entries(postReactions).map(([reactionName, emoji]) => (
-                  <Button
-                     key={reactionName}
-                     size="small"
-                     sx={{
-                        aspectRatio: 1 / 1,
-                        flexShrink: 0,
-                        flexGrow: 0,
-                        padding: 0,
-                        display: "flex",
-                        alignItems: "center",
-                     }}
-                  >
-                     <Typography
-                        variant="h6"
-                        component="span"
-                        sx={{
-                           display: "inline-flex",
-                           alignItems: "center",
-                        }}
-                     >
-                        {emoji.normal}
-                     </Typography>
-                  </Button>
-               ))}
-            </ButtonGroup>
+            />
          </CardActions>
       </PostExcerptCard>
    );

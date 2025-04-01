@@ -23,7 +23,9 @@ import { title } from "process";
 import ErrorTest from "./pages/ErrorTest";
 import { IoMdAdd } from "react-icons/io";
 import { MdLibraryAdd } from "react-icons/md";
-
+import AuthProtect from "./pages/protect/AuthProtect";
+import SnackToast from "./components/common/notification/SnackToast";
+import { Bounce, ToastContainer, toast } from 'react-toastify';
 
 
 
@@ -45,12 +47,13 @@ const App = () => {
       }
    }, [dispatch, prefersDark]);
 
+   
    return (
       <>
          <MainMUILayout>
             <Routes>
                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<Navigate to="/posts" />} />
+                  <Route index element={<Navigate to="/login" />} />
                   <Route
                      path="/error-test"
                      element={
@@ -95,7 +98,7 @@ const App = () => {
                      path="/add-post"
                      element={
                         <PageContainer title="Asteroid - add post">
-                           <AddPost />
+                           <AuthProtect PageComponent={<AddPost />} />
                         </PageContainer>
                      }
                   />
@@ -134,6 +137,17 @@ const App = () => {
                   <Route path="*" element={<Navigate to="/not-found" />} />
                </Route>
             </Routes>
+            <ToastContainer
+               position="top-right"
+               autoClose={3000}
+               newestOnTop={true}
+               closeOnClick={true}
+               pauseOnFocusLoss
+               draggable
+               pauseOnHover
+               theme="colored"
+               transition={Bounce}
+            />
          </MainMUILayout>
       </>
    );
