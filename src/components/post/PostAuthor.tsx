@@ -4,6 +4,7 @@ import { fetchUser, selectUserById } from "../../features/users/usersSlice";
 import { useEffect, useState } from "react";
 import ErrorMsg from "../common/error/ErrorMsg";
 import { selectPostsStatus } from "../../features/posts/postsSlice";
+import { red } from "@mui/material/colors";
 
 
 interface PostAuthorProps {
@@ -91,7 +92,11 @@ const PostAuthor = ({ userId }: PostAuthorProps) => {
       )
    } else if (isErrorFetchUser) {
       userContent = (
-         <ErrorMsg text={userFetchError ?? 'Unknwon Error'} />
+         <Typography sx={{ color: red[500], fontSize: '.9rem' }} >
+            {
+               userFetchError ?? 'Unknwon Error'
+            }
+         </Typography>
       )
    } else {
       userContent = (

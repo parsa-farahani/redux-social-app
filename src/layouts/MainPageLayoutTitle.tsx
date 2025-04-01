@@ -11,7 +11,7 @@ interface MainPageLayoutTitleProps {
 const MainPageLayoutTitle = ({ text }: MainPageLayoutTitleProps) => {
 
    return (
-      <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex' }} >
+      <Typography variant="h4" component="h1" sx={{ display: 'flex', marginBottom: '2rem' }} >
          <MainPageLayoutTitleCont
             component="span"
          >
