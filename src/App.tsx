@@ -1,5 +1,5 @@
 // style
-import { Link, Navigate, Route, Routes, useNavigation } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import "./assets/style/App.css";
 import MainMUILayout from "./mui-layouts/MainMUILayout";
 import MainLayout from "./layouts/MainLayout";
@@ -9,23 +9,18 @@ import {
    Users,
    User,
    AddPost,
-   EditPost,
    Login,
    Test,
    NotFound,
 } from "./pages";
 import { useEffect } from "react";
 import { useAppDispatch } from "./app/hooks";
-import { Fab, useMediaQuery, useTheme } from "@mui/material";
+import {  useMediaQuery } from "@mui/material";
 import { setDarkMode, setLightMode } from "./features/settings/settingsSlice";
 import PageContainer from "./containers/PageContainer";
-import { title } from "process";
 import ErrorTest from "./pages/ErrorTest";
-import { IoMdAdd } from "react-icons/io";
-import { MdLibraryAdd } from "react-icons/md";
 import AuthProtect from "./pages/protect/AuthProtect";
-import SnackToast from "./components/common/notification/SnackToast";
-import { Bounce, ToastContainer, toast } from 'react-toastify';
+import { Bounce, ToastContainer } from 'react-toastify';
 
 
 
@@ -99,14 +94,6 @@ const App = () => {
                      element={
                         <PageContainer title="Asteroid - add post">
                            <AuthProtect PageComponent={<AddPost />} />
-                        </PageContainer>
-                     }
-                  />
-                  <Route
-                     path="/edit-post/:postId"
-                     element={
-                        <PageContainer title="Asteroid - edit post">
-                           <EditPost />
                         </PageContainer>
                      }
                   />

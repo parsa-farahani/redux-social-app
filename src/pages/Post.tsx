@@ -1,41 +1,14 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-   Alert,
-   Avatar,
    Box,
-   Button,
-   ButtonGroup,
-   Card,
-   CardActionArea,
-   CardActions,
-   CardContent,
-   CardHeader,
    Divider,
-   FormControl,
-   IconButton,
-   List,
-   ListItem,
-   Menu,
-   MenuItem,
-   Modal,
    Stack,
-   TextField,
-   Tooltip,
    Typography,
-   useMediaQuery,
-   useTheme,
 } from "@mui/material";
-import { lightBlue, pink, purple, red } from "@mui/material/colors";
-import { FaUserLarge } from "react-icons/fa6";
-import { MdMoreVert } from "react-icons/md";
-import { MdModeEditOutline } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import React from "react";
 import { postReactions } from "../constants/postReactions";
 import MainPageLayout from "../layouts/MainPageLayout";
-import { BiCommentDetail, BiSolidCommentDetail } from "react-icons/bi";
-import Comment from "../components/comment/PostComment";
 import {
    deletePost,
    editPost,
@@ -58,25 +31,31 @@ import {
 import { selectAuthUsername } from "../features/auth/authSlice";
 import { useFormik } from "formik";
 import { addPostSchema } from "../validations/addPostValidation";
-import { FaCheck } from "react-icons/fa";
-import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import PostComments from "../components/pages/Post/PostComments";
+import PostAuthorBar from "../components/pages/Post/PostAuthorBar";
+import { EditPostContentTextField, EditPostTitleTextField } from "./Post.styles";
+import PostDeletionModal from "../components/pages/Post/PostDeletionModal";
+import PostActions from "../components/pages/Post/PostActions";
+
+
+
+const MemoizedPostActions = React.memo(PostActions);
+
 
 const Post = () => {
    // MUI
-   const theme = useTheme();
-   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
    const [optionsMenuAnchorEl, setOptionsMenuAnchorEl] =
       useState<null | HTMLElement>(null);
 
-   const handleOptionsMenu = (event: React.MouseEvent<HTMLElement>) => {
+   const handleOptionsMenu = useCallback((event: React.MouseEvent<HTMLElement>) => {
       setOptionsMenuAnchorEl(event.currentTarget);
-   };
+   }, []);
 
-   const handleCloseOptionsMenu = () => {
+   const handleCloseOptionsMenu = useCallback(() => {
       setOptionsMenuAnchorEl(null);
-   };
+   }, []);
+   
 
    // rrd
    const navigate = useNavigate();
@@ -84,6 +63,7 @@ const Post = () => {
 
    // states
    const [postFetchStatus, setPostFetchStatus] = useState("idle");
+   const [postFetchError, setPostFetchError] = useState<string | null>(null);
    const [isEditMode, setIsEditMode] = useState(false);
 
    const [isOpenDeletionModal, setIsOpenDeletionModal] = useState(false);
@@ -97,7 +77,6 @@ const Post = () => {
    const { editPost: postEditStatus, deletePost: postDeleteStatus } =
       useAppSelector(selectPostsStatus);
    const {
-      fetchPost: postFetchError,
       editPost: postEditError,
       deletePost: postDeleteError,
    } = useAppSelector(selectPostsError);
@@ -254,20 +233,23 @@ const Post = () => {
       }
    };
 
-   const handleCancelEditPost = () => {
-      formik.values.title = post.title;
-      formik.values.content = post.content;
-      toggleEditMode();
-      handleCloseOptionsMenu();
-   };
-
-   const toggleEditMode = (newIsEditMode?: boolean) => {
+   const toggleEditMode = useCallback((newIsEditMode?: boolean) => {
       if (newIsEditMode != null) {
          setIsEditMode(newIsEditMode);
       } else {
          setIsEditMode((ie) => !ie);
       }
-   };
+   }, []);
+
+
+   const handleCancelEditPost = useCallback(() => {
+      formik.values.title = post.title;
+      formik.values.content = post.content;
+      toggleEditMode();
+      handleCloseOptionsMenu();
+   }, [formik?.values, post?.title, post?.content, toggleEditMode, handleCloseOptionsMenu]);
+
+
 
    // delete
    const handleSubmitDeletePost = async () => {
@@ -296,9 +278,9 @@ const Post = () => {
       }
    };
 
-   const handleOpenDeletionModal = () => {
+   const handleOpenDeletionModal = useCallback(() => {
       setIsOpenDeletionModal(true);
-   };
+   }, []);
 
    const handleCloseDeletionModal = () => {
       setIsOpenDeletionModal(false);
@@ -309,13 +291,31 @@ const Post = () => {
       let ignore = false;
 
       const fetchPostInEffect = async () => {
-         console.log("fetch single post");
          setPostFetchStatus("pending");
          try {
-            await dispatch(fetchPost(postId!)).unwrap();
+            await dispatch(
+               fetchPost(postId!)
+            ).unwrap();
             setPostFetchStatus("succeed");
+            setPostFetchError(null);
          } catch (error) {
+            console.error(error);
+
             setPostFetchStatus("failed");
+
+            let errorMessage = "Failed to Fetch post";
+            if (error instanceof Error) {
+               errorMessage = error.message;
+            } else if (
+               typeof error === "object" &&
+               error !== null &&
+               "message" in error
+            ) {
+               errorMessage = String(error.message);
+            } else if (typeof error === "string") {
+               errorMessage = error;
+            }
+            setPostFetchError(errorMessage);
          }
       };
 
@@ -333,11 +333,12 @@ const Post = () => {
       return () => {
          toggleEditMode(false);
       };
-   }, []);
+   }, [toggleEditMode]);
+
 
    let postsContent;
-   if (isSuccessDeletePost) {
-      postsContent = <ErrorMsg text="This post is deleted..." />;
+   if (!post) {
+      postsContent = <ErrorMsg text="404 - Not Found the Post" />;
    } else if (isPendingFetchPost || isPendingDeletePost) {
       postsContent = (
          <Spinner
@@ -348,38 +349,14 @@ const Post = () => {
    } else if (isSuccessFetchPost) {
       postsContent = (
          <>
+            { /* this form works with formik to handle edit-post behavior */ }
             <form
                id="edit-post-form"
                noValidate
                onSubmit={formik.handleSubmit}
                style={{ display: "hidden" }}
             ></form>
-            <Card elevation={0} sx={{ marginBottom: "1rem" }}>
-               <CardActionArea
-                  onClick={() => navigate(`/users/${post.userId}`)}
-               >
-                  <CardContent sx={{ padding: 1 }}>
-                     <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: pink[500], color: "#222" }}>
-                           <FaUserLarge />
-                        </Avatar>
-                        <Box>
-                           <Typography variant="body1" component="h2">
-                              {postAuthor?.name ?? "Unknown Author"}
-                           </Typography>
-                           <Typography
-                              variant="caption"
-                              component="time"
-                              dateTime={post.date}
-                              sx={{ color: "text.disabled" }}
-                           >
-                              {new Date(post.date).toLocaleString()}
-                           </Typography>
-                        </Box>
-                     </Stack>
-                  </CardContent>
-               </CardActionArea>
-            </Card>
+            <PostAuthorBar user={postAuthor} postDate={post.date} />
             <Box sx={{ minHeight: "60vh", padding: 1, marginBottom: "3rem" }}>
                <Stack direction="row" alignItems="center">
                   {!isEditMode ? (
@@ -391,7 +368,7 @@ const Post = () => {
                         {post.title}
                      </Typography>
                   ) : (
-                     <TextField
+                     <EditPostTitleTextField
                         type="text"
                         name="title"
                         value={formik.values?.title}
@@ -412,34 +389,12 @@ const Post = () => {
                            },
                         }}
                         disabled={isPendingEditPost}
-                        sx={{
-                           marginBlock: 0,
-                           marginRight: "1rem",
-                           ".MuiInputBase-root": {
-                              // background: 'none',
-                              // padding: 0,
-                              fontSize: theme.typography.h4.fontSize,
-                              borderRadius: ".5rem",
-                              overflow: "clip",
-                              "&::before": {
-                                 border: 0,
-                                 "&:hover": {
-                                    border: 0,
-                                 },
-                              },
-                           },
-                           ".MuiInputBase-input": {
-                              padding: 0,
-                              paddingInline: 1,
-                              fontWeight: "700",
-                           },
-                        }}
                      />
                   )}
                   {!isEditMode && (
                      <PostReactionButtonGroup
                         variant="outlined"
-                        sx={{ marginRight: "1rem", height: "40px" }}
+                        sx={{ marginRight: "1rem" }}
                      >
                         {Object.entries(postReactions).map(
                            ([reactionName, emoji]) => (
@@ -459,159 +414,24 @@ const Post = () => {
                         )}
                      </PostReactionButtonGroup>
                   )}
-                  <Box flexShrink={0}>
-                     {isMdUp && isAuthUserPost ? (
-                        <Stack direction="row" spacing={1}>
-                           {!isEditMode ? (
-                              <React.Fragment key="1">
-                                 <Tooltip title="Edit">
-                                    <IconButton
-                                       size="medium"
-                                       onClick={() => toggleEditMode(true)}
-                                       sx={{ color: "text.secondary" }}
-                                    >
-                                       <MdModeEditOutline />
-                                    </IconButton>
-                                 </Tooltip>
-                                 <Tooltip title="Delete">
-                                    <IconButton
-                                       size="medium"
-                                       onClick={handleOpenDeletionModal}
-                                       sx={{ color: "text.secondary" }}
-                                    >
-                                       <MdDelete />
-                                    </IconButton>
-                                 </Tooltip>
-                              </React.Fragment>
-                           ) : (
-                              <React.Fragment key="2">
-                                 <Tooltip title="Save">
-                                    <IconButton
-                                       form="edit-post-form"
-                                       type="submit"
-                                       size="medium"
-                                       disabled={isPendingEditPost}
-                                       sx={{
-                                          color: "text.secondary",
-                                          ".MuiButtonBase-root": {
-                                             aspectRatio: "1 / 1",
-                                             flexShrink: "0",
-                                          },
-                                       }}
-                                    >
-                                       {isPendingEditPost ? (
-                                          <Spinner size="24px" />
-                                       ) : (
-                                          <IoMdCheckmark />
-                                       )}
-                                    </IconButton>
-                                 </Tooltip>
-                                 <Tooltip title="Cancel">
-                                    <IconButton
-                                       size="medium"
-                                       onClick={handleCancelEditPost}
-                                       disabled={isPendingEditPost}
-                                       sx={{ color: "text.secondary" }}
-                                    >
-                                       <IoMdClose />
-                                    </IconButton>
-                                 </Tooltip>
-                              </React.Fragment>
-                           )}
-                        </Stack>
-                     ) : isAuthUserPost ? (
-                        <Box>
-                           {!isEditMode ? (
-                              <>
-                                 <IconButton
-                                    size="medium"
-                                    aria-label="post options"
-                                    aria-controls="options-menu"
-                                    aria-haspopup="true"
-                                    onClick={handleOptionsMenu}
-                                 >
-                                    <MdMoreVert />
-                                 </IconButton>
-                                 <Menu
-                                    id="options-menu"
-                                    anchorEl={optionsMenuAnchorEl}
-                                    anchorOrigin={{
-                                       vertical: "top",
-                                       horizontal: "right",
-                                    }}
-                                    keepMounted
-                                    transformOrigin={{
-                                       vertical: "top",
-                                       horizontal: "right",
-                                    }}
-                                    open={Boolean(optionsMenuAnchorEl)}
-                                    onClose={handleCloseOptionsMenu}
-                                    elevation={2}
-                                 >
-                                    <MenuItem
-                                       onClick={() => toggleEditMode(true)}
-                                       sx={{ display: "flex" }}
-                                    >
-                                       <Typography
-                                          sx={{
-                                             marginRight: ".75rem",
-                                             flexGrow: 1,
-                                          }}
-                                       >
-                                          Edit
-                                       </Typography>
-                                       <MdModeEditOutline />
-                                    </MenuItem>
-                                    <MenuItem onClick={handleOpenDeletionModal}>
-                                       <Typography
-                                          sx={{
-                                             marginRight: ".75rem",
-                                             flexGrow: 1,
-                                          }}
-                                       >
-                                          Delete
-                                       </Typography>
-                                       <MdDelete />
-                                    </MenuItem>
-                                 </Menu>
-                              </>
-                           ) : (
-                              <>
-                                 <Tooltip title="Save">
-                                    <IconButton
-                                       form="edit-post-form"
-                                       type="submit"
-                                       size="medium"
-                                       sx={{ color: "text.secondary" }}
-                                    >
-                                       <IoMdCheckmark />
-                                    </IconButton>
-                                 </Tooltip>
-                                 <Tooltip title="Cancel">
-                                    <IconButton
-                                       size="medium"
-                                       onClick={handleCancelEditPost}
-                                       sx={{ color: "text.secondary" }}
-                                    >
-                                       <IoMdClose />
-                                    </IconButton>
-                                 </Tooltip>
-                              </>
-                           )}
-                        </Box>
-                     ) : null}
-                  </Box>
+                  
+                  { /* post actions: edit, delete, ... */ }
+                  <MemoizedPostActions isEditMode={isEditMode} isAuthUserPost={isAuthUserPost} isPendingEditPost={isPendingEditPost} onCancelEditPost={handleCancelEditPost} onToggleEditMode={toggleEditMode} onOpenDeletionModal={handleOpenDeletionModal} optionsMenuAnchorEl={optionsMenuAnchorEl} handleCloseOptionsMenu={handleCloseOptionsMenu} handleOptionsMenu={handleOptionsMenu}  />
                </Stack>
                <Divider
                   sx={{ borderColor: "text.disabled", marginBlock: "1rem" }}
                />
                {!isEditMode ? (
-                  <Typography variant="body1" component="p">
-                     {post.content}
-                  </Typography>
+                  <pre>
+                     <Typography variant="body1" component="p">
+                        {
+                           post.content
+                        }
+                     </Typography>
+                  </pre>
                ) : (
                   <>
-                     <TextField
+                     <EditPostContentTextField
                         type="text"
                         name="content"
                         value={formik.values?.content}
@@ -635,92 +455,13 @@ const Post = () => {
                            },
                         }}
                         disabled={isPendingEditPost}
-                        sx={{
-                           marginBlock: 0,
-                           marginRight: "1rem",
-                           ".MuiInputBase-root": {
-                              padding: 0,
-                              // background: 'none',
-                              fontSize: theme.typography.body1.fontSize,
-                              borderRadius: ".5rem",
-                              overflow: "clip",
-                           },
-                           ".MuiInputBase-input": {
-                              padding: 1,
-                              // paddingInline: 1,
-                           },
-                        }}
+
                      />
                   </>
                )}
-               {/* Deletion of the Post */}
-               <Modal
-                  open={isOpenDeletionModal}
-                  onClose={handleCloseDeletionModal}
-                  aria-labelledby="modal-modal-title"
-                  aria-describedby="modal-modal-description"
-               >
-                  <Box
-                     sx={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        width: "95vw",
-                        maxWidth: "400px",
-                        p: 4,
-                        paddingTop: "3rem",
-                        bgcolor: "background.paper",
-                        borderRadius: ".5rem",
-                        border: "2px solid #000",
-                        boxShadow: 24,
-                     }}
-                  >
-                     <IconButton
-                        onClick={handleCloseDeletionModal}
-                        size="small"
-                        sx={{
-                           position: "absolute",
-                           right: "1rem",
-                           top: "1rem",
-                        }}
-                     >
-                        <IoMdClose />
-                     </IconButton>
-                     <Typography
-                        id="modal-modal-title"
-                        variant="h6"
-                        component="h2"
-                        sx={{ marginBottom: "2rem" }}
-                     >
-                        Are you sure to delete this post? 🤔
-                     </Typography>
-                     <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="center"
-                        spacing={1}
-                     >
-                        <Button
-                           variant="outlined"
-                           onClick={handleCloseDeletionModal}
-                           color="secondary"
-                           sx={{ flex: 1, borderRadius: "100vw" }}
-                        >
-                           No
-                        </Button>
-                        <Button
-                           variant="outlined"
-                           onClick={handleSubmitDeletePost}
-                           color="secondary"
-                           sx={{ flex: 1, borderRadius: "100vw" }}
-                        >
-                           Yes
-                        </Button>
-                     </Stack>
-                  </Box>
-               </Modal>
             </Box>
+            {/* Deletion of the Post */}
+            <PostDeletionModal isOpen={isOpenDeletionModal} onClose={handleCloseDeletionModal} onSubmit={handleSubmitDeletePost} />
             {/* Comments */}
             <Box component="section">
                <PostComments postId={postId!} />
@@ -735,7 +476,13 @@ const Post = () => {
       postsContent = <ErrorMsg text="404 - Not Fount the Post!" />;
    }
 
-   return <MainPageLayout>{postsContent}</MainPageLayout>;
+   return (
+      <MainPageLayout>
+         {
+            postsContent
+         }
+      </MainPageLayout>
+   );
 };
 
 export default Post;

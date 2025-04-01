@@ -1,16 +1,14 @@
-import { Box, CssBaseline, Divider, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import PostExcerpt from "../components/post/PostExcerpt";
 import MainPageLayout from "../layouts/MainPageLayout";
-import Spinner from "../components/loading/spinner/Spinner";
 import PostSkeleton from "../components/loading/skeleton/PostSkeleton";
 import React, { useEffect } from "react";
-import { fetchPosts, selectAllPosts, selectPostsError, selectPostsIds, selectPostsStatus } from "../features/posts/postsSlice";
+import { fetchPosts, selectPostsError, selectPostsIds, selectPostsStatus } from "../features/posts/postsSlice";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import ErrorMsg from "../components/common/error/ErrorMsg";
 import { selectAuthUsername } from "../features/auth/authSlice";
-import { selectUserById, selectUserReactions } from "../features/users/usersSlice";
-import { HeaderOffset } from "../components/header/Header.styles";
+import { selectUserReactions } from "../features/users/usersSlice";
+import PostsBottomOffset from "../components/pages/Posts/PostsBottomOffset";
 
 
 const MemoizedPostExcerpt = React.memo(PostExcerpt);
@@ -64,7 +62,6 @@ const Posts = () => {
                postId={postId}
                type="posts"
                authUsername={authUsername}
-               // authUser={authUser}
                authUserReaction={ isAuth ? (authUserReactions[postId] ?? null) : null }
             />
          </Grid>
@@ -83,8 +80,7 @@ const Posts = () => {
                postsContent
             }
          </Grid>
-         <HeaderOffset />
-         <HeaderOffset />
+         <PostsBottomOffset />
       </MainPageLayout>
    );
 };

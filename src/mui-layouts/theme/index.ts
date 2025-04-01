@@ -70,6 +70,14 @@ const sharedStyles: ThemeOptions = {
             },
          },
       },
+      MuiDivider: {
+         styleOverrides: {
+            root: {
+               marginTop: '1rem',
+               marginBottom: '1rem',
+            }
+         }
+      }
    } as Components,
 };
 
@@ -122,7 +130,7 @@ export const darkTheme = createTheme({
          secondary: "#ddd",
          disabled: "#bbbbbba1",
       },
-      divider: "#bbb",
+      divider: "#55555570",
       action: {
          disabledBackground: "#55555550",
          disabledOpacity: 0.5,

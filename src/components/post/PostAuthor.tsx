@@ -1,7 +1,9 @@
-import { Typography } from "@mui/material";
+import { Skeleton, Stack, Typography } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { fetchUser, selectAllUsers, selectUserById } from "../../features/users/usersSlice";
-import { useEffect } from "react";
+import { fetchUser, selectUserById } from "../../features/users/usersSlice";
+import { useEffect, useState } from "react";
+import ErrorMsg from "../common/error/ErrorMsg";
+import { selectPostsStatus } from "../../features/posts/postsSlice";
 
 
 interface PostAuthorProps {
@@ -11,33 +13,100 @@ interface PostAuthorProps {
 
 const PostAuthor = ({ userId }: PostAuthorProps) => {
 
+   // states
+   const [userFetchStatus, setUserFetchStatus] = useState('idle');
+   const [userFetchError, setUserFetchError] = useState<string | null>(null);
+
+
    // redux
    const dispatch = useAppDispatch();
    const user = useAppSelector(state => selectUserById(state, userId));
+   const { fetchPosts: postsFetchStatus } = useAppSelector(selectPostsStatus);
 
+   // I check the 'state.posts.status.fetchPosts' (which is used in 'Posts' page to render 'PostExcerpt' components), to avoid the overlap between 'fetchPosts' and 'fetchUser' which causes the 'Netwrok Waterfalls' problem
+   const isPendingFetchPosts = postsFetchStatus === 'pending';
+
+   const isIdleFetchUser = userFetchStatus === 'idle';
+   const isPendingFetchUser = userFetchStatus === 'pending';
+   const isSuccessFetchUser = userFetchStatus === 'succeed';
+   const isErrorFetchUser = userFetchStatus === 'failed';
 
    useEffect(() => {
-      if (userId == null) return;
+      if (!isIdleFetchUser || userId == null || isPendingFetchPosts) return;
       let ignore = false;
 
+      const fetchUserInEffect = async () => {
+
+         setUserFetchStatus('pending');
+
+         try {
+            await dispatch(
+               fetchUser(userId)
+            ).unwrap()
+            setUserFetchStatus('succeed');
+            setUserFetchError(null);
+         } catch (error) {
+            console.error(error);
+            setUserFetchStatus('failed');
+
+            let errorMessage = "Failed to edit post";
+            if (error instanceof Error) {
+               errorMessage = error.message;
+            } else if (
+               typeof error === "object" &&
+               error !== null &&
+               "message" in error
+            ) {
+               errorMessage = String(error.message);
+            } else if (typeof error === "string") {
+               errorMessage = error;
+            }
+
+            setUserFetchError(errorMessage);
+         }
+      }
+
       if (!ignore) {
-         dispatch(
-            fetchUser(userId)
-         )
+         fetchUserInEffect()
       }
 
       return () => {
          ignore = true;
       }
-   }, [dispatch, userId])
+   }, [dispatch, userId, isIdleFetchUser, isPendingFetchPosts])
 
+
+   let userContent;
+   if (isPendingFetchUser) {
+      userContent = (
+         <Skeleton variant="rounded" sx={{ display: 'inline-block' }} />
+      )
+   } else if (isSuccessFetchUser) {
+      userContent = (
+         <Typography>
+            {
+               user?.name
+            }
+         </Typography>
+      )
+   } else if (isErrorFetchUser) {
+      userContent = (
+         <ErrorMsg text={userFetchError ?? 'Unknwon Error'} />
+      )
+   } else {
+      userContent = (
+         <Typography>
+            Unknown User
+         </Typography>
+      )
+   }
 
    return (
-      <Typography>
+      <Stack sx={{ minWidth: '10%', width: 'fit-content' }} >
          {
-            user?.name ?? 'Unknown User'
-         }
-      </Typography>
+            userContent
+         } 
+      </Stack>
    );
 }
  

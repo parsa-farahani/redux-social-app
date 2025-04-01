@@ -1,8 +1,6 @@
 import { Avatar, Card, CardActionArea, CardContent, Stack, Typography } from "@mui/material";
-import { blue, deepOrange, green, pink, yellow } from "@mui/material/colors";
+import { pink } from "@mui/material/colors";
 import { FaUserLarge } from "react-icons/fa6";
-import { randomNum } from "../../utils/random/randomNum";
-import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { type User } from "../../features/users/usersSlice";
 

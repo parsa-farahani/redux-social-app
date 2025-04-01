@@ -1,33 +1,18 @@
 import MainPageLayout from "../layouts/MainPageLayout";
-import { type FormikValues, useFormik } from "formik";
+import { useFormik } from "formik";
 import { addPostSchema } from "../validations/addPostValidation";
-import { Box, Button, styled, TextField, useTheme } from "@mui/material";
+import { Box, Button, useTheme } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { addPost, selectPostsStatus } from "../features/posts/postsSlice";
 import { nanoid } from "@reduxjs/toolkit";
 import { useNavigate } from "react-router-dom";
 import { selectAuthUsername } from "../features/auth/authSlice";
-import { useEffect, useState } from "react";
-import SnackToast from "../components/common/notification/SnackToast";
+import { useEffect } from "react";
 import { toast } from "react-toastify";
-import { Axios, AxiosError } from "axios";
+import { AddPostContentTextField, AddPostTitleTextField } from "./AddPost.styles";
 
 
 
-const AddPostTitleTextField = styled(TextField)(({theme}) => ({
-   '& .MuiInputBase-input, & .MuiFormLabel-root': {
-      fontSize: `${theme.typography.h5.fontSize} !important`
-   }
-}));
-
-const AddPostContentTextField = styled(TextField)(({theme}) => ({
-   '& .MuiInputBase-input': {
-      fontSize: `${theme.typography.h6.fontSize} !important`
-   },
-   '& .MuiFormLabel-root': {
-      fontSize: `${theme.typography.h5.fontSize} !important`
-   }
-}));
 
 
 const AddPost = () => {

@@ -1,4 +1,4 @@
-import { Box, Button, FormControl, InputLabel, MenuItem, NativeSelect, Select, Snackbar, Stack, Typography, type SelectChangeEvent } from "@mui/material";
+import { Button, FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent } from "@mui/material";
 import MainPageLayout from "../layouts/MainPageLayout";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
@@ -127,13 +127,10 @@ const Login = () => {
                   disabled={isLoadingUsers}  
                   sx={{
                      width: '100%',
-                     borderRadius: '5px',
+                     borderRadius: '.5rem',
                      '& .MuiBackdrop-root': {
                         display: 'none'
                      },
-                     '& .MuiList-root': {
-                        marginTop: '1rem',
-                     }
                   }}
                >
                   {

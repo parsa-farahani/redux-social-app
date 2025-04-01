@@ -1,8 +1,7 @@
 import type React from "react";
-import { Box, Container, Fab, useTheme } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import { Helmet } from 'react-helmet-async';
-import { Link, useLocation } from "react-router-dom";
-import { MdLibraryAdd } from "react-icons/md";
+import { useLocation } from "react-router-dom";
 import AddPostFab from "../components/pages/AddPost/AddPostFab";
 import { useAppSelector } from "../app/hooks";
 import { selectAuthUsername } from "../features/auth/authSlice";

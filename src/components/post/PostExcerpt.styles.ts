@@ -21,8 +21,17 @@ export const PostExcerptCard = styled(Card)<PostExcerptCardProps>(({ theme }) =>
 }));
 
 
+export const ViewPostButton = styled(Button)(({theme}) => ({
+   marginRight: "auto",
+   borderRadius: "100vw",
+   color: theme.palette.text.secondary,
+   borderColor: theme.palette.text.secondary,
+}))
+
+
 export const StyledReactionButton = styled(Button)(({theme}) => ({
    // aspectRatio: 1 / 1,
+   height: '40px',
    flexShrink: 0,
    flexGrow: 0,
    padding: '0.5rem .5rem',

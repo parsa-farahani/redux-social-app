@@ -18,11 +18,14 @@ import {
 import { selectAuthUsername } from "../features/auth/authSlice";
 import PostSkeleton from "../components/loading/skeleton/PostSkeleton";
 import ErrorMsg from "../components/common/error/ErrorMsg";
-import { Avatar, Box, Skeleton, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Divider, Skeleton, Stack, Typography } from "@mui/material";
 import { FaUserLarge } from "react-icons/fa6";
 import { pink, red } from "@mui/material/colors";
+import UserInfoSkeleton from "../components/pages/User/UserInfoSkeleton";
+import UserInfo from "../components/pages/User/UserInfo";
 
 const MemoizedPostExcerpt = React.memo(PostExcerpt);
+
 
 const User = () => {
    // states
@@ -47,6 +50,7 @@ const User = () => {
    const isIdleFetchUser = userFetchStatus === "idle";
 
    const isAuth = Boolean(authUsername);
+   const userPostsTotal = userPostsIds?.length ?? 0;
 
    // For now i fetch all posts for the user, because i dont have a backend to request user-posts, but it should be fixed when we have a backend to handle it (it is a bug now)
    useEffect(() => {
@@ -94,32 +98,11 @@ const User = () => {
    let userContent;
    if (userFetchStatus === 'pending') {
       userContent = (
-         <Stack direction="row" justifyContent="flex-start" spacing={1} sx={{ marginBlock: '1.5rem' }} >
-            <Skeleton variant="circular" sx={{ height: '60px', width: '60px' }} />
-            <Skeleton variant="rounded" sx={{ height: '60px', width: '140px' }} />
-         </Stack>
+         <UserInfoSkeleton />
       )
    } else if (userFetchStatus === 'succeed') {
       userContent = (
-         <Stack direction="row" justifyContent="stretch" spacing={2} sx={{ marginBlock: '1.5rem' }} >
-            <Avatar alt={user.name} sx={{ width: '60px', height: '60px', bgcolor: pink[400], fontSize: '1.5rem', color: "#222", marginLeft: 'auto', marginRight: 'auto' }}>
-               <FaUserLarge />
-            </Avatar>
-            <Stack direction="column" alignItems="flex-start" justifyContent="center" >
-               <Typography variant="h5" component="h1" >
-                  {
-                     user.name
-                  }
-               </Typography>
-               <Typography  variant="body1" component="p" sx={{ color: 'text.secondary' }} >
-                  {
-                     userPostsIds.length ?? 0
-                  }
-                  {" "}
-                  posts
-               </Typography>
-            </Stack>
-         </Stack>
+         <UserInfo user={user} userPostsTotal={userPostsTotal} />
       )
    } else if (userFetchStatus === 'failed') {
       userContent = (
@@ -163,6 +146,7 @@ const User = () => {
          {
             userContent
          }
+         <Divider/>
          <Grid container spacing={2}>
             {postsContent}
          </Grid>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Typography } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import UserSkeleton from "../components/loading/skeleton/UserSkeleton";
@@ -39,6 +39,7 @@ const Users = () => {
    const isPendingFetchingUsers = usersFetchStatus === 'pending';
 
 
+   // fetch users
    useEffect(() => {
       if (!isIdleFetchUsers) return;
       let ignore = false;

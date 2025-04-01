@@ -7,11 +7,13 @@ interface MainPageLayoutTitleContProps extends BoxProps {
 }
 
 export const MainPageLayoutTitleCont = styled(Box)<MainPageLayoutTitleContProps>(({ theme }) => ({
-   position: "absolute",
+   position: "relative",
    zIndex: 99,
-   left: "50%",
-   transform: "translateX(-50%)",
-   top: `calc(${theme.mixins.toolbar.minHeight}px + 10px)`,
+   // left: "50%",
+   // transform: "translateX(-50%)",
+   // top: `calc(${theme.mixins.toolbar.minHeight}px + 10px)`,
+   display: 'inline-block',
+   margin: 'auto',
    padding: ".5rem 1.5rem",
    borderRadius: ".5rem",
    borderTopLeftRadius: "0",
@@ -28,12 +30,13 @@ export const MainPageLayoutTitleCont = styled(Box)<MainPageLayoutTitleContProps>
             transparent
          ),
          radial-gradient(
-            30px circle at 0% 70%,
+            20px circle at 0% 70%,
             ${teal[300]},
             ${indigo[300]},
             transparent
          )
    `,
+   fontSize: `clamp(1rem, calc(.8rem + 1vw), ${theme.typography.h4.fontSize})`,
    "&::before": {
       content: '""',
       position: "absolute",
@@ -46,14 +49,15 @@ export const MainPageLayoutTitleCont = styled(Box)<MainPageLayoutTitleContProps>
             ${pink[700]},
             15%,
             ${blue[500]},
-            40%,
+            30%,
             transparent 50%,
             transparent
          ),
          radial-gradient(
-            30px circle at 0% 70%,
+            20px circle at 0% 90%,
             ${teal[300]},
             ${indigo[300]},
+            60%,
             transparent
          )
       `,
@@ -63,7 +67,7 @@ export const MainPageLayoutTitleCont = styled(Box)<MainPageLayoutTitleContProps>
       content: '""',
       position: "absolute",
       zIndex: -1,
-      inset: '2px',
+      inset: '-2px 2px 2px',
       borderRadius: "inherit",
       background: theme.palette.background.default,
    },
@@ -78,6 +82,7 @@ export const MainPageLayoutTitleLeftCorner = styled(Box)<MainPageLayoutTitleCorn
    position: "absolute",
    zIndex: 100,
    right: 'calc(100% - 2px)',
+   top: '0%',
    width: "60px",
    height: "60px",
    borderRadius: ".5rem",
@@ -118,6 +123,7 @@ export const MainPageLayoutTitleLeftCorner = styled(Box)<MainPageLayoutTitleCorn
 export const MainPageLayoutTitleRightCorner = styled(Box)<MainPageLayoutTitleCornerProps>(({ theme }) => ({
    position: "absolute",
    left: 'calc(100% - 2px)',
+   top: '0%',
    width: "60px",
    height: "60px",
    borderRadius: ".5rem",

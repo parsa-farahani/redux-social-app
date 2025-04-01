@@ -1,60 +1,37 @@
 import {
    Avatar,
-   Button,
-   ButtonGroup,
-   Card,
-   type CardProps,
-   CardActionArea,
    CardActions,
-   cardClasses,
    CardContent,
    CardHeader,
    IconButton,
-   styled,
    Typography,
-   useTheme,
-   Snackbar,
-   Stack,
 } from "@mui/material";
-import { blue, green, pink, red } from "@mui/material/colors";
-import { MdDangerous, MdMoreVert } from "react-icons/md";
+import { red } from "@mui/material/colors";
+import { MdMoreVert } from "react-icons/md";
 import { FaUserLarge } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import { postReactions } from "../../constants/postReactions";
-import MuiCard from "@mui/material/Card";
-import zIndex from "@mui/material/styles/zIndex";
-import { PostExcerptCard, PostReactionButtonGroup } from "./PostExcerpt.styles";
+import { PostExcerptCard, PostReactionButtonGroup, ViewPostButton } from "./PostExcerpt.styles";
 import {
-   addPostReaction,
-   removePostReaction,
    selectPostById,
-   type Post,
 } from "../../features/posts/postsSlice";
 import PostAuthor from "./PostAuthor";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import ErrorMsg from "../common/error/ErrorMsg";
 import PostReactionButton from "./PostReactionButton";
-import { selectAuthUsername } from "../../features/auth/authSlice";
-import { useState } from "react";
-import { AxiosError } from "axios";
-import { addUserReaction, removeUserReaction, selectUserById, selectUserReactions, type User } from "../../features/users/usersSlice";
+import { addUserReaction, removeUserReaction } from "../../features/users/usersSlice";
+import { toast } from "react-toastify";
+
 
 interface PostExcerptProps {
    postId: string;
    type?: "posts" | "user";
    authUsername: string | null;
-   // authUser: User;
    authUserReaction: string | null;
 }
 
-const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReaction }: PostExcerptProps) => {
-// const PostExcerpt = ({ postId, type = "posts", authUser }: PostExcerptProps) => {
-   // states
-   const [reactionError, setReactionError] = useState<null | string>(null);
-   const [showReactionErrorToast, setShowReactionErrorToast] = useState(false);
 
-   // MUI
-   const theme = useTheme();
+
+const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReaction }: PostExcerptProps) => {
 
    // rrd
    const navigate = useNavigate();
@@ -62,13 +39,12 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
    // redux
    const dispatch = useAppDispatch();
    const post = useAppSelector((state) => selectPostById(state, postId));
-   // const authUsername = useAppSelector(selectAuthUsername);
-   // const authUser = useAppSelector(state => selectUserById(state, authUsername!));
-   // const authUserReactions = useAppSelector(state => selectUserReactions(state, authUsername!))
+
    
    const isAuth = Boolean(authUsername) && (authUsername != null);
 
 
+   // + reactions
    const handleRemoveReaction = async (reactionName: string) => {
       if (!isAuth) {
          // If user hasn't logged in yet, we'll send him/her to '/login' page
@@ -90,6 +66,20 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
 
       } catch (error) {
          console.error(error);
+
+         let errorMessage = "Failed to edit post";
+         if (error instanceof Error) {
+            errorMessage = error.message;
+         } else if (
+            typeof error === "object" &&
+            error !== null &&
+            "message" in error
+         ) {
+            errorMessage = String(error.message);
+         } else if (typeof error === "string") {
+            errorMessage = error;
+         }
+         toast.error(errorMessage);
       }
    }
 
@@ -143,6 +133,20 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
    
          } catch (error) {
             console.error(error);
+
+            let errorMessage = "Failed to edit post";
+            if (error instanceof Error) {
+               errorMessage = error.message;
+            } else if (
+               typeof error === "object" &&
+               error !== null &&
+               "message" in error
+            ) {
+               errorMessage = String(error.message);
+            } else if (typeof error === "string") {
+               errorMessage = error;
+            }
+            toast.error(errorMessage);
          }
       } else {
 
@@ -160,25 +164,38 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
    
          } catch (error) {
             console.error(error);
+
+            let errorMessage = "Failed to edit post";
+            if (error instanceof Error) {
+               errorMessage = error.message;
+            } else if (
+               typeof error === "object" &&
+               error !== null &&
+               "message" in error
+            ) {
+               errorMessage = String(error.message);
+            } else if (typeof error === "string") {
+               errorMessage = error;
+            }
+            toast.error(errorMessage);
          }
       }
       
    };
    
 
-   const handleCloseReactionErrorToast = () => {
-      setShowReactionErrorToast(false);
-   }
+
 
    if (!post) {
-      return <ErrorMsg text="404 - Not Found the Post!" />;
+      return null;
    }
+
 
    return (
       <PostExcerptCard variant="elevation" elevation={4} component="article">
          <CardHeader
             avatar={
-               type === "posts" && (
+               (type === "posts") && (
                   <Avatar sx={{ bgcolor: red[500], color: "#222" }}>
                      <FaUserLarge />
                   </Avatar>
@@ -189,7 +206,7 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
                   <MdMoreVert />
                </IconButton>
             }
-            title={type === "posts" && <PostAuthor userId={post.userId} />}
+            title={(type === "posts") && <PostAuthor userId={post.userId} />}
             subheader={
                <Typography
                   variant="body2"
@@ -211,18 +228,12 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
             </Typography>
          </CardContent>
          <CardActions>
-            <Button
+            <ViewPostButton
                size="medium"
                variant="outlined"
-               sx={{
-                  marginRight: "auto",
-                  borderRadius: "100vw",
-                  color: "text.secondary",
-                  borderColor: "text.secondary",
-               }}
             >
                <Link to={`/posts/${post.id}`}>View Post</Link>
-            </Button>
+            </ViewPostButton>
             <PostReactionButtonGroup variant="outlined">
                {Object.entries(postReactions).map(([reactionName, emoji]) => (
                   <PostReactionButton
@@ -241,26 +252,6 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
                   />
                ))}
             </PostReactionButtonGroup>
-            <Snackbar
-               anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-               open={showReactionErrorToast}
-               autoHideDuration={3000}
-               onClick={handleCloseReactionErrorToast}
-               onClose={handleCloseReactionErrorToast}
-               message={
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                     <MdDangerous />
-                     <Typography>{reactionError}</Typography>
-                  </Stack>
-               }
-               sx={{
-                  fontSize: "1.5rem !important",
-                  "& .MuiPaper-root": {
-                     fontSize: "1.2rem",
-                     bgcolor: red[600],
-                  },
-               }}
-            />
          </CardActions>
       </PostExcerptCard>
    );

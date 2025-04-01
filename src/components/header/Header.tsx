@@ -23,7 +23,7 @@ import {
    ListItemText,
    Tooltip,
 } from "@mui/material";
-import { MdAccountCircle, MdLogin, MdLogout } from "react-icons/md";
+import { MdAccountCircle, MdArticle, MdDangerous, MdLogin, MdLogout } from "react-icons/md";
 import { IoIosMenu, IoMdMoon, IoMdThermometer } from "react-icons/io";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import {
@@ -31,41 +31,50 @@ import {
    toggleDarkMode,
 } from "../../features/settings/settingsSlice";
 import { RiSunFill } from "react-icons/ri";
-import { BsMoonStarsFill } from "react-icons/bs";
+import { BsGear, BsMoonStarsFill } from "react-icons/bs";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import asteroidImg from "../../assets/images/asteroid/asteroid-icon.svg";
 import { HeaderNavLink } from "./Header.styles";
 import { FaInbox } from "react-icons/fa";
 import { IoMdMail } from "react-icons/io";
 import { logout, selectAuthUsername } from "../../features/auth/authSlice";
 import { selectUserById } from "../../features/users/usersSlice";
+import { toast } from "react-toastify";
+import { BiError, BiLogIn, BiUser } from "react-icons/bi";
+import HeaderLogoLink from "./HeaderLogoLink";
 
 const navLinksData = [
    {
       title: "Posts",
       href: "/posts",
+      icon: <MdArticle/>,
    },
    {
       title: "Users",
       href: "/users",
-   },
-   {
-      title: "NotFound",
-      href: "/not-found",
+      icon: <BiUser/>,
    },
    {
       title: "Login",
       href: "/login",
+      icon: <BiLogIn/>,
+   },
+   {
+      title: "NotFound",
+      href: "/not-found",
+      icon: <MdDangerous />,
    },
    {
       title: "Test",
       href: "/test",
+      icon: <BsGear />,
    },
    {
       title: "ErrorTest",
       href: "/error-test",
+      icon: <BiError />,
    },
 ];
+
 
 const Header = () => {
    // states
@@ -119,6 +128,7 @@ const Header = () => {
       try {
          await dispatch(logout());
          // show notification...
+         toast.info('You have logged out successfully')
       } catch (error) {
          console.error(error);
       }
@@ -144,19 +154,7 @@ const Header = () => {
             >
                <Container maxWidth="xl">
                   <Toolbar disableGutters>
-                     <Box sx={{ marginInlineEnd: ".75rem" }}>
-                        <Link to="/">
-                           <img
-                              src={asteroidImg}
-                              alt="asteroid home"
-                              style={{
-                                 display: "inline-block",
-                                 width: "40px",
-                                 height: "40px",
-                              }}
-                           />
-                        </Link>
-                     </Box>
+                     <HeaderLogoLink isMdUp={isMdUp} />
                      <Box sx={{ flexGrow: 1 }}>
                         {!isMdUp ? (
                            <>
@@ -191,7 +189,9 @@ const Header = () => {
                                           >
                                              <ListItemButton>
                                                 <ListItemIcon>
-                                                   <FaInbox />
+                                                   {
+                                                      navData.icon
+                                                   }
                                                 </ListItemIcon>
                                                 <ListItemText
                                                    primary={navData.title}
