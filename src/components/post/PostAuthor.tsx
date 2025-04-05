@@ -1,10 +1,7 @@
 import { Skeleton, Stack, Typography } from "@mui/material";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { fetchUser, selectUserById } from "../../features/users/usersSlice";
-import { useEffect, useState } from "react";
-import ErrorMsg from "../common/error/ErrorMsg";
-import { selectPostsStatus } from "../../features/posts/postsSlice";
 import { red } from "@mui/material/colors";
+import { useGetUserQuery } from "../../api/apiSlice";
+import { getErrorMessage } from "../../utils/error/errorUtils";
 
 
 interface PostAuthorProps {
@@ -14,68 +11,16 @@ interface PostAuthorProps {
 
 const PostAuthor = ({ userId }: PostAuthorProps) => {
 
-   // states
-   const [userFetchStatus, setUserFetchStatus] = useState('idle');
-   const [userFetchError, setUserFetchError] = useState<string | null>(null);
-
-
    // redux
-   const dispatch = useAppDispatch();
-   const user = useAppSelector(state => selectUserById(state, userId));
-   const { fetchPosts: postsFetchStatus } = useAppSelector(selectPostsStatus);
+   const {
+      data: user,
+      isFetching: isPendingFetchUser,
+      isSuccess: isSuccessFetchUser,
+      isError: isErrorFetchUser,
+      error: userFetchError,
+   } = useGetUserQuery(userId);
 
-   // I check the 'state.posts.status.fetchPosts' (which is used in 'Posts' page to render 'PostExcerpt' components), to avoid the overlap between 'fetchPosts' and 'fetchUser' which causes the 'Netwrok Waterfalls' problem
-   const isPendingFetchPosts = postsFetchStatus === 'pending';
-
-   const isIdleFetchUser = userFetchStatus === 'idle';
-   const isPendingFetchUser = userFetchStatus === 'pending';
-   const isSuccessFetchUser = userFetchStatus === 'succeed';
-   const isErrorFetchUser = userFetchStatus === 'failed';
-
-   useEffect(() => {
-      if (!isIdleFetchUser || userId == null || isPendingFetchPosts) return;
-      let ignore = false;
-
-      const fetchUserInEffect = async () => {
-
-         setUserFetchStatus('pending');
-
-         try {
-            await dispatch(
-               fetchUser(userId)
-            ).unwrap()
-            setUserFetchStatus('succeed');
-            setUserFetchError(null);
-         } catch (error) {
-            console.error(error);
-            setUserFetchStatus('failed');
-
-            let errorMessage = "Failed to edit post";
-            if (error instanceof Error) {
-               errorMessage = error.message;
-            } else if (
-               typeof error === "object" &&
-               error !== null &&
-               "message" in error
-            ) {
-               errorMessage = String(error.message);
-            } else if (typeof error === "string") {
-               errorMessage = error;
-            }
-
-            setUserFetchError(errorMessage);
-         }
-      }
-
-      if (!ignore) {
-         fetchUserInEffect()
-      }
-
-      return () => {
-         ignore = true;
-      }
-   }, [dispatch, userId, isIdleFetchUser, isPendingFetchPosts])
-
+   
 
    let userContent;
    if (isPendingFetchUser) {
@@ -84,7 +29,7 @@ const PostAuthor = ({ userId }: PostAuthorProps) => {
       )
    } else if (isSuccessFetchUser) {
       userContent = (
-         <Typography>
+         <Typography variant="body1" component="p" >
             {
                user?.name
             }
@@ -94,7 +39,7 @@ const PostAuthor = ({ userId }: PostAuthorProps) => {
       userContent = (
          <Typography sx={{ color: red[500], fontSize: '.9rem' }} >
             {
-               userFetchError ?? 'Unknwon Error'
+               getErrorMessage(userFetchError) ?? 'Unknwon Error'
             }
          </Typography>
       )
@@ -107,7 +52,7 @@ const PostAuthor = ({ userId }: PostAuthorProps) => {
    }
 
    return (
-      <Stack sx={{ minWidth: '10%', width: 'fit-content' }} >
+      <Stack sx={{ minWidth: '10%', width: 'fit-content', height: '24px', display: 'inline-flex' }} >
          {
             userContent
          } 

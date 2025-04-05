@@ -1,11 +1,11 @@
 import { Button, FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent } from "@mui/material";
 import MainPageLayout from "../layouts/MainPageLayout";
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { type FormEvent, type ReactNode, useState } from "react";
+import { useAppDispatch } from "../app/hooks";
 import { login } from "../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
-import { fetchUsers, selectAllUsers, selectUsersStatus } from "../features/users/usersSlice";
 import SnackToast from "../components/common/notification/SnackToast";
+import apiSlice, { useGetUsersQuery } from "../api/apiSlice";
 
 
 const Login = () => {
@@ -19,25 +19,16 @@ const Login = () => {
 
    // redux
    const dispatch = useAppDispatch();
-   const users = useAppSelector(selectAllUsers) ?? [];
-   const { fetchUsers: usersFetchStatus } = useAppSelector(selectUsersStatus)
-   const isLoadingUsers = usersFetchStatus === 'pending';
+
+   const {
+      data: users = [],
+      refetch: refetchUsers,
+      isFetching: isPendingFetchUsers,
+      isSuccess: isSuccessFetchUsers,
+      isError: isErrorFetchUsers,
+   } = useGetUsersQuery();
 
 
-   useEffect(() => {
-      if (usersFetchStatus !== 'idle') return;
-      let ignore = false;
-      
-      if (!ignore) {
-         dispatch(
-            fetchUsers()
-         )
-      }
-
-      return () => {
-         ignore = true;
-      }
-   }, [dispatch, usersFetchStatus])
 
 
    const handleSubmit = async (event: FormEvent) => {
@@ -50,6 +41,9 @@ const Login = () => {
       try {
          await dispatch(
             login(username)
+         );
+         dispatch(
+            apiSlice.endpoints.getUser.initiate(username)
          )
          navigate('/posts');
       } catch (error) {
@@ -73,20 +67,18 @@ const Login = () => {
    }
 
    const handleRefetchUsers = () => {
-      dispatch(
-         fetchUsers()
-      )
+      refetchUsers();
    }
 
 
    let usersContent; // Options of Select
-   if (usersFetchStatus === 'pending') {
+   if (isPendingFetchUsers) {
       usersContent = (
          <MenuItem value="" >
             Loading Users...
          </MenuItem>
       )
-   } else if (usersFetchStatus === 'succeed') {
+   } else if (isSuccessFetchUsers) {
       usersContent = users.map(user => (
          <MenuItem key={user.id} value={user.id} >
             {
@@ -94,7 +86,7 @@ const Login = () => {
             }
          </MenuItem>
       ));
-   } else if (usersFetchStatus === 'failed') {
+   } else if (isErrorFetchUsers) {
       usersContent = (
          <MenuItem value="" onClick={handleRefetchUsers} >
             Loading Failed - Click to try again
@@ -111,7 +103,7 @@ const Login = () => {
                   id="login-username-label"
                >
                   {
-                     (isLoadingUsers) ? (
+                     (isPendingFetchUsers) ? (
                         "Loading Users..."
                      ) : (
                         "Username"
@@ -124,7 +116,7 @@ const Login = () => {
                   value={username}
                   label="Username"
                   onChange={handleUsernameChange}
-                  disabled={isLoadingUsers}  
+                  disabled={isPendingFetchUsers}  
                   sx={{
                      width: '100%',
                      borderRadius: '.5rem',

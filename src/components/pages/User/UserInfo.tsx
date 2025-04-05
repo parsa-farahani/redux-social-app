@@ -12,7 +12,14 @@ interface UserInfoProps {
 
 const UserInfo = ( { user, userPostsTotal }: UserInfoProps ) => {
    return (
-      <Stack direction="row" justifyContent="stretch" spacing={2} sx={{ marginBlock: '1.5rem' }} >
+      <Stack
+         direction="row"
+         justifyContent="stretch"
+         spacing={2}
+         sx={{
+            marginBlock: '1.5rem',
+         }}
+      >
          <Avatar alt={user.name} sx={{ width: '60px', height: '60px', bgcolor: pink[400], fontSize: '1.5rem', color: "#222", marginLeft: 'auto', marginRight: 'auto' }}>
             <FaUserLarge />
          </Avatar>

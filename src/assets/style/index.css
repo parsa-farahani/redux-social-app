@@ -31,3 +31,9 @@ a:any-link {
   text-decoration: none;
   color: inherit;
 }
+
+
+/* utils */
+.deemed {
+  opacity: .6;
+}

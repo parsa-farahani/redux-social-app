@@ -1,15 +1,16 @@
-import { Box, Button, Card, CardContent, Divider, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Button, Card, CardContent, Divider, Stack, TextField, Typography } from "@mui/material";
 import PostComment from "../../comment/PostComment";
-import { useAppDispatch, useAppSelector } from "../../../app/hooks";
+import { useAppSelector } from "../../../app/hooks";
 import { useFormik } from "formik";
 import { selectAuthUsername } from "../../../features/auth/authSlice";
-import { addComment, fetchComments, selectAllComments, selectCommentsError, selectCommentsStatus, selectPostCommentsByPostId } from "../../../features/comments/commentsSlice";
-import { useEffect } from "react";
+import { type Comment } from "../../../features/comments/commentsSlice";
+import { useMemo } from "react";
 import { addCommentSchema } from "../../../validations/addCommentValidation";
-import { nanoid } from "@reduxjs/toolkit";
+import { createSelector, nanoid } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 import Spinner from "../../loading/spinner/Spinner";
 import ErrorMsg from "../../common/error/ErrorMsg";
+import { useAddCommentMutation, useGetCommentsQuery } from "../../../api/apiSlice";
 
 
 
@@ -33,24 +34,44 @@ const PostComments = ( { postId }: PostCommentsProps ) => {
 
 
    // redux
-   const dispatch = useAppDispatch();
    const authUsername = useAppSelector(selectAuthUsername);
-   const comments = useAppSelector(state => selectPostCommentsByPostId(state, postId));
-   const { fetchComments: commentsFetchStatus, addComment: commentsAddStatus } = useAppSelector(selectCommentsStatus)
-   const { fetchComments: commentsFetchError, addComment: commentsAddError } = useAppSelector(selectCommentsError)
 
 
    const isAuth = (authUsername != null) && (authUsername !== "");
 
 
-   const isPendingFetchComments = commentsFetchStatus === 'pending';
-   const isSuccessFetchComments = commentsFetchStatus === 'succeed';
-   const isErrorFetchComments = commentsFetchStatus === 'failed';
+   const selectPostComments = useMemo(() => {
+      const emptyArray: Comment[] = [];
 
-   const isPendingAddComment = commentsAddStatus === 'pending';
-   const isSuccessAddComment = commentsAddStatus === 'succeed';
-   const isErrorAddComment = commentsAddStatus === 'failed';
+      return createSelector(
+         (res) => res.data,
+         (res, postId) => postId,
+         (data: Comment[], postId: string) => data?.filter((comment: Comment) => comment.postId === postId) ?? emptyArray
+      )
+   }, [])
 
+   const {
+      comments,
+      isFetching: isPendingFetchComments,
+      isSuccess: isSuccessFetchComments,
+      isError: isErrorFetchComments,
+      error: commentsFetchError,
+   } = useGetCommentsQuery(undefined, {
+      selectFromResult: result => ({
+         ...result,
+         comments: selectPostComments(result, postId)
+      })
+   });
+
+   const [
+      addComment,
+      {
+         isLoading: isPendingAddComment,
+         isSuccess: isSuccessAddComment,
+         isError: isErrorAddComment,
+         error: commentsAddError
+      }
+   ] = useAddCommentMutation();
 
 
    const handleSubmitComment = async (formikValues: { content: string }) => {
@@ -59,19 +80,16 @@ const PostComments = ( { postId }: PostCommentsProps ) => {
          toast.info('Please login to submit your comment');
          return;
       }
-      console.log('submit comment: ' + formikValues.content);
       
       try {
-         await dispatch(
-            addComment(
-               {
-                  id: nanoid(),
-                  content: formikValues.content,
-                  postId,
-                  userId: authUsername!,
-                  date: new Date().toISOString(),
-               }
-            )
+         await addComment(
+            {
+               id: nanoid(),
+               content: formikValues.content,
+               postId,
+               userId: authUsername!,
+               date: new Date().toISOString(),
+            }
          ).unwrap();
          formik.values.content = "";
          toast.success('The comment is submitted Successfully!');
@@ -95,22 +113,6 @@ const PostComments = ( { postId }: PostCommentsProps ) => {
    };
 
 
-   // because we dont have any backend now, I have to fetch all of comments here
-   useEffect(() => {
-      if (commentsFetchStatus !== 'idle') return;
-      let ignore = false;
-
-      if (!ignore) {
-         dispatch(
-            fetchComments()
-         )
-      }
-
-      return () => {
-         ignore = true;
-      }
-   }, [dispatch, commentsFetchStatus])
-
 
    let commentsContent;
    if (isPendingFetchComments) {
@@ -118,11 +120,19 @@ const PostComments = ( { postId }: PostCommentsProps ) => {
          <Spinner text="loading comments..." variant="block" />
       )
    } else if (isSuccessFetchComments) {
-      commentsContent = (
-         commentsContent = comments.map((comment) => (
-            <PostComment key={comment.id} comment={comment} />
-         ))
-      )
+      if (comments?.length > 0) {
+         commentsContent = (
+            commentsContent = comments.map((comment) => (
+               <PostComment key={comment.id} comment={comment} />
+            ))
+         )
+      } else {
+         commentsContent = (
+            <Alert severity="info" variant="outlined" >
+               No comments yet...
+            </Alert>
+         )
+      }
    } else if (isErrorFetchComments) {
       commentsContent = (
          <ErrorMsg text="Failed to load comments." />

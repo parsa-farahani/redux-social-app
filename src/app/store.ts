@@ -1,30 +1,25 @@
 import type { Action, ThunkAction } from "@reduxjs/toolkit";
 import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import authSlice from "../features/auth/authSlice";
-import usersSlice from "../features/users/usersSlice";
-import postsSlice from "../features/posts/postsSlice";
-import commentsSlice from "../features/comments/commentsSlice";
-import settingsSlice from "../features/settings/settingsSlice";
 import { listenerMiddleware } from "./listenerMiddleware";
-// import { counterSlice } from "../features/counter/counterSlice";
-// import { quotesApiSlice } from "../features/quotes/quotesApiSlice";
+import apiSlice from "../api/apiSlice";
+import authSlice from "../features/auth/authSlice";
+import settingsSlice from "../features/settings/settingsSlice";
+// import usersSlice from "../features/users/usersSlice";
+// import postsSlice from "../features/posts/postsSlice";
+// import commentsSlice from "../features/comments/commentsSlice";
 
 const rootReducer = combineSlices(
+   apiSlice,
    authSlice,
-   usersSlice,
-   postsSlice,
-   commentsSlice,
    settingsSlice,
-   // counterSlice,
-   // quotesApiSlice
 );
 
 export const makeStore = (preloadedState?: Partial<RootState>) => {
    const store = configureStore({
       reducer: rootReducer,
       middleware: (getDefaultMiddleware) => {
-         return getDefaultMiddleware().prepend(listenerMiddleware.middleware);
+         return getDefaultMiddleware().prepend(listenerMiddleware.middleware).concat(apiSlice.middleware);
       },
       preloadedState,
    });
@@ -35,6 +30,7 @@ export const makeStore = (preloadedState?: Partial<RootState>) => {
 };
 
 export const store = makeStore();
+
 
 //  --------  Types --------
 export type AppStore = typeof store;

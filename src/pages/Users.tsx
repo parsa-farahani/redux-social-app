@@ -3,12 +3,13 @@ import { Typography } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import UserSkeleton from "../components/loading/skeleton/UserSkeleton";
 import UserExcerpt from "../components/user/UserExcerpt";
-import { fetchUsers, selectAllUsers, selectUsersStatus } from "../features/users/usersSlice";
 import MainPageLayout from "../layouts/MainPageLayout";
 import Grid from "@mui/material/Grid2";
 import { randomNum } from "../utils/random/randomNum";
 import { blue, deepOrange, green, pink, yellow } from "@mui/material/colors";
 import { coloredAvatars, selectIsColoredAvatars } from "../features/settings/settingsSlice";
+import { useGetUsersQuery } from "../api/apiSlice";
+import Spinner from "../components/loading/spinner/Spinner";
 
 
 
@@ -30,30 +31,15 @@ const Users = () => {
    // redux
    const dispatch = useAppDispatch();
    const isColoredAvatars = useAppSelector(selectIsColoredAvatars);
-   const users = useAppSelector(selectAllUsers) ?? [];
-   const { fetchUsers: usersFetchStatus } = useAppSelector(selectUsersStatus);
-   
-   const isIdleFetchUsers = usersFetchStatus === 'idle';
-   const isSuccessFetchUsers = usersFetchStatus === 'succeed';
+
+   const {
+      data: users = [],
+      isLoading: isLoadingFetchUsers,
+      isFetching: isFetchingFetchUsers,
+      isSuccess: isSuccessFetchUsers,
+   } = useGetUsersQuery();
+
    const isValidUsersData = isSuccessFetchUsers && Array.isArray(users) && users.length > 0;
-   const isPendingFetchingUsers = usersFetchStatus === 'pending';
-
-
-   // fetch users
-   useEffect(() => {
-      if (!isIdleFetchUsers) return;
-      let ignore = false;
-
-      if (!ignore) {
-         dispatch(
-            fetchUsers()
-         )
-      }
-
-      return () => {
-         ignore = true;
-      }
-   }, [dispatch, isIdleFetchUsers])
 
 
    // creating avatar-colors
@@ -72,7 +58,7 @@ const Users = () => {
 
 
    let usersContent;
-   if (isPendingFetchingUsers) {
+   if (isLoadingFetchUsers) {
       usersContent = (
          <Grid container spacing={2}>
             {
@@ -83,6 +69,10 @@ const Users = () => {
                ))
             }
          </Grid>
+      )
+   } else if (isFetchingFetchUsers) {
+      usersContent = (
+         <Spinner variant="block" text="Loading users" />
       )
    } else if (isValidUsersData) {
       usersContent = (

@@ -1,7 +1,5 @@
 import type React from "react";
-import { Box, Divider, Typography, useTheme } from "@mui/material";
-import { HeaderOffset } from "../components/header/Header.styles";
-import { blue, cyan, green, pink, purple } from "@mui/material/colors";
+import { Box } from "@mui/material";
 import MainPageLayoutTitle from "./MainPageLayoutTitle";
 
 
@@ -22,7 +20,6 @@ const MainPageLayout = ({ title, children=null }: MainPageLayoutProps) => {
             title && (
                <>
                   <MainPageLayoutTitle text={title} />
-                  {/* <Divider sx={{ marginBlock: "1rem" }} /> */}
                </>
             )
          }

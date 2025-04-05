@@ -1,6 +1,5 @@
-import { Box, BoxProps, Typography, useTheme } from "@mui/material";
+import { Typography } from "@mui/material";
 import { HeaderOffset } from "../components/header/Header.styles";
-import { blue, cyan, deepPurple, green, indigo, pink, purple, teal } from "@mui/material/colors";
 import { MainPageLayoutTitleCont, MainPageLayoutTitleLeftCorner, MainPageLayoutTitleRightCorner } from "./MainPageLayoutTitle.styles";
 
 interface MainPageLayoutTitleProps {
@@ -15,9 +14,6 @@ const MainPageLayoutTitle = ({ text }: MainPageLayoutTitleProps) => {
          <MainPageLayoutTitleCont
             component="span"
          >
-            {/* <MainPageLayoutTitleTopMask
-               component="span"
-            /> */}
             <MainPageLayoutTitleLeftCorner
                component="span"
             />

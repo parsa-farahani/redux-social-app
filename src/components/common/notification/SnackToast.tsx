@@ -1,5 +1,5 @@
 import { Snackbar, Stack, Typography, type SnackbarCloseReason } from "@mui/material";
-import { green, lightBlue, pink, red } from "@mui/material/colors";
+import { green, lightBlue, pink } from "@mui/material/colors";
 import { MdCheck, MdDangerous, MdInfo } from "react-icons/md";
 
 

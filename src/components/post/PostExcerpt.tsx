@@ -14,34 +14,41 @@ import { postReactions } from "../../constants/postReactions";
 import { PostExcerptCard, PostReactionButtonGroup, ViewPostButton } from "./PostExcerpt.styles";
 import {
    selectPostById,
+   useUpdatePostReactionMutation,
 } from "../../features/posts/postsSlice";
 import PostAuthor from "./PostAuthor";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { useAppSelector } from "../../app/hooks";
 import PostReactionButton from "./PostReactionButton";
-import { addUserReaction, removeUserReaction } from "../../features/users/usersSlice";
+import { type User } from "../../features/users/usersSlice";
 import { toast } from "react-toastify";
+import { useUpdateUserReactionMutation } from "../../api/apiSlice";
 
 
 interface PostExcerptProps {
    postId: string;
    type?: "posts" | "user";
-   authUsername: string | null;
-   authUserReaction: string | null;
+   authUser: User | undefined,
 }
 
 
 
-const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReaction }: PostExcerptProps) => {
+const PostExcerpt = ({ postId, type = "posts", authUser }: PostExcerptProps) => {
 
    // rrd
    const navigate = useNavigate();
 
    // redux
-   const dispatch = useAppDispatch();
    const post = useAppSelector((state) => selectPostById(state, postId));
 
+   const [
+      updateUserReaction,
+   ] = useUpdateUserReactionMutation();
+
+   const [
+      updatePostReaction,
+   ] = useUpdatePostReactionMutation();
    
-   const isAuth = Boolean(authUsername) && (authUsername != null);
+   const isAuth = Boolean(authUser?.id) && (authUser != null);
 
 
    // + reactions
@@ -52,22 +59,41 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
          return;
       }
 
+      if (!authUser.reactions[postId]) return;  // already there is no such reacction, so there is nothing to remove!
+
+
+      
       try {
    
-         await dispatch(
-            removeUserReaction(
-               {
-                  userId: authUsername,
-                  postId: postId,
-                  reactionName,
-               }
-            )
-         )
+         const newUserReactions = {
+            ...authUser.reactions,
+         };
+         delete newUserReactions[postId];
+
+         await updateUserReaction(
+            {
+               id: authUser.id,
+               reactions: newUserReactions,
+            }
+         ).unwrap();
+   
+
+         const newPostReactions = { 
+            ...post.reactions,
+            [reactionName]: post.reactions[reactionName] - 1,
+         };
+
+         await updatePostReaction(
+            {
+               id: postId,
+               reactions: newPostReactions,
+            }
+         ).unwrap();
 
       } catch (error) {
          console.error(error);
 
-         let errorMessage = "Failed to edit post";
+         let errorMessage = "Failed to add reaction";
          if (error instanceof Error) {
             errorMessage = error.message;
          } else if (
@@ -90,12 +116,25 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
          return;
       }
 
+      const authUserReaction = authUser.reactions[postId];
+
 
       if ( authUserReaction === reactionName ) {  // Avoiding reactions more than 'once' (just 1 like/dislike per user)
          handleRemoveReaction(reactionName);
          return;
       }
 
+
+
+      // a draft from 'current user-reactions' to be updated
+      const newUserReactions = {
+         ...authUser.reactions,
+      };
+      
+      // a draft from 'current post-reactions' to be updated
+      const newPostReactions = {
+         ...post.reactions,
+      };
 
 
       const isOppositeReaction = (
@@ -109,32 +148,32 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
       ) {
          const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
 
+
          try {
+            
+            // delete newUserReactions[postId];
+            newUserReactions[postId] = reactionName;
+            await updateUserReaction(
+               {
+                  id: authUser.id,
+                  reactions: newUserReactions,
+               }
+            ).unwrap();
 
-            await dispatch(
-               removeUserReaction(
-                  {
-                     userId: authUsername,
-                     postId: postId,
-                     reactionName: oppositeReactionName,
-                  }
-               )
-            )
 
-            await dispatch(
-               addUserReaction(
-                  {
-                     userId: authUsername,
-                     postId: postId,
-                     reactionName,
-                  }
-               )
-            )
+            newPostReactions[oppositeReactionName] -= 1;
+            newPostReactions[reactionName] += 1;
+            await updatePostReaction(
+               {
+                  id: postId,
+                  reactions: newPostReactions,
+               }
+            ).unwrap();
    
          } catch (error) {
             console.error(error);
 
-            let errorMessage = "Failed to edit post";
+            let errorMessage = "Failed to add reaction";
             if (error instanceof Error) {
                errorMessage = error.message;
             } else if (
@@ -152,20 +191,28 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
 
          try {
    
-            await dispatch(
-               addUserReaction(
-                  {
-                     userId: authUsername,
-                     postId: postId,
-                     reactionName,
-                  }
-               )
-            )
+            newUserReactions[postId] = reactionName;
+            await updateUserReaction(
+               {
+                  id: authUser.id,
+                  reactions: newUserReactions,
+               }
+            ).unwrap();
+
+
+            
+            newPostReactions[reactionName] += 1;
+            await updatePostReaction(
+               {
+                  id: postId,
+                  reactions: newPostReactions,
+               }
+            ).unwrap();
    
          } catch (error) {
             console.error(error);
 
-            let errorMessage = "Failed to edit post";
+            let errorMessage = "Failed to add reaction";
             if (error instanceof Error) {
                errorMessage = error.message;
             } else if (
@@ -180,7 +227,6 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
             toast.error(errorMessage);
          }
       }
-      
    };
    
 
@@ -206,7 +252,7 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
                   <MdMoreVert />
                </IconButton>
             }
-            title={(type === "posts") && <PostAuthor userId={post.userId} />}
+            title={(type === "posts") && (post?.userId) && <PostAuthor userId={post.userId} />}
             subheader={
                <Typography
                   variant="body2"
@@ -242,7 +288,7 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
                         handleAddReaction(reactionName)
                      }
                      content={
-                        (isAuth && (authUserReaction === reactionName)) ? (
+                        (isAuth && (authUser?.reactions[postId] === reactionName)) ? (
                            emoji.active
                         ) : (
                            emoji.normal

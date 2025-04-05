@@ -1,4 +1,4 @@
-# Asteroid - social app (showcase project)
+# Asteroid - social app (branch: RTK/RTK-Query)
 
 ## Technologies Used:
   - React (+ React-Router-DOM)

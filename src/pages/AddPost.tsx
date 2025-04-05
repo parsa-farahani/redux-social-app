@@ -2,8 +2,8 @@ import MainPageLayout from "../layouts/MainPageLayout";
 import { useFormik } from "formik";
 import { addPostSchema } from "../validations/addPostValidation";
 import { Box, Button, useTheme } from "@mui/material";
-import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { addPost, selectPostsStatus } from "../features/posts/postsSlice";
+import { useAppSelector } from "../app/hooks";
+import { useAddPostMutation } from "../features/posts/postsSlice";
 import { nanoid } from "@reduxjs/toolkit";
 import { useNavigate } from "react-router-dom";
 import { selectAuthUsername } from "../features/auth/authSlice";
@@ -38,11 +38,15 @@ const AddPost = () => {
    const navigate = useNavigate();
 
    // redux
-   const dispatch = useAppDispatch();
+
+   const [
+      addPost,
+      {
+         isLoading: isPendingAddPost,
+      }
+   ] = useAddPostMutation();
+
    const authUsername = useAppSelector(selectAuthUsername);
-   const { addPost: addPostStatus } = useAppSelector(selectPostsStatus);
-   
-   const isPendingAddPost = addPostStatus === 'pending';
    
 
    const canSubmit = (!isPendingAddPost);  // emptiness of inputs are handled by 'formik + yup'
@@ -52,19 +56,17 @@ const AddPost = () => {
       if (authUsername == null) return;
 
       try {
-         await dispatch(
-            addPost({
-               id: nanoid(),
-               title: formikValues.title,
-               content: formikValues.content,
-               userId: authUsername,
-               date: new Date().toISOString(),
-               reactions: {
-                  like: 0,
-                  dislike: 0,
-               }
-            })
-         ).unwrap();
+         await addPost({
+            id: nanoid(),
+            title: formikValues.title,
+            content: formikValues.content,
+            userId: authUsername,
+            date: new Date().toISOString(),
+            reactions: {
+               like: 0,
+               dislike: 0,
+            }
+         }).unwrap();
          toast.success("The post is added successfully!");
          navigate(`/users/${authUsername}`);
       } catch (error) {

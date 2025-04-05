@@ -2,10 +2,8 @@ import { Avatar, Card, CardActionArea, CardContent, CardHeader, Typography } fro
 import { purple } from "@mui/material/colors";
 import { FaUserLarge } from "react-icons/fa6";
 import { type Comment } from "../../features/comments/commentsSlice";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { fetchUser, selectUserById } from "../../features/users/usersSlice";
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGetUserQuery } from "../../api/apiSlice";
 
 
 interface CommentProps {
@@ -14,32 +12,15 @@ interface CommentProps {
 
 const PostComment = ( { comment }: CommentProps ) => {
 
-   // states
-   const [userFetchStatus, setUserFetchStatus] = useState('idle');
 
    // rrd
    const navigate = useNavigate();
 
    // redux
-   const dispatch = useAppDispatch();
-   const commentAuthor = useAppSelector(state => selectUserById(state, comment.userId))
+   const {
+      data: commentAuthor,
+   } = useGetUserQuery(comment?.userId);
 
-
-
-   useEffect(() => {
-      if (userFetchStatus !== 'idle') return;
-      let ignore = false;
-
-      if (!ignore) {
-         dispatch(
-            fetchUser(comment.userId)
-         )
-      }
-
-      return () => {
-         ignore = true;
-      }
-   }, [dispatch, userFetchStatus, comment?.userId])
 
 
    const navigateToUserPage = () => {

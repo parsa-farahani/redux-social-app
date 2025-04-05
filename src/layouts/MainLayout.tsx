@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import Header from "../components/header/Header";
 import { Outlet } from "react-router-dom";
 import { Container } from "@mui/material";

@@ -1,10 +1,11 @@
-import { createAsyncThunk, createEntityAdapter, createSlice, type PayloadAction, type EntityState, isRejected, createSelector } from "@reduxjs/toolkit";
+import { createAsyncThunk, createEntityAdapter, createSlice, type PayloadAction, type EntityState, isRejected, createSelector, current } from "@reduxjs/toolkit";
 import { AppDispatch, type AppThunk, type RootState } from "../../app/store";
 import { addPostServer, deletePostServer, getPostServer, getPostsServer, updatePostReactionServer, updatePostServer } from '../../services/postsServices'
 import { type AppStartListening, startAppListening } from "../../app/listenerMiddleware";
-import { addUserReaction, addUserReactionFulfilled, removeUserReactionFulfilled } from "../users/usersSlice";
+import apiSlice, { useUpdateUserReactionMutation } from "../../api/apiSlice";
 
-interface PostReactions {
+
+export interface PostReactions {
    [index: string]: number;
    like: number;
    dislike: number;
@@ -20,28 +21,7 @@ export interface Post {
    reactions: PostReactions;
 }
 
-type Status = 'idle' | 'pending' | 'succeed' | 'failed';
-interface PostsStatus {
-   [index: string]: Status;
-   fetchPosts: Status;
-   addPost: Status;
-   editPost: Status;
-   deletePost: Status;
-}
-
-
-type OpError = string | null;
-interface PostsError {
-   [index: string]: OpError;
-   fetchPosts: OpError;
-   addPost: OpError;
-   editPost: OpError;
-   deletePost: OpError;
-}
-interface PostsState extends EntityState<Post, string> {
-   status: PostsStatus;
-   error: PostsError;
-}
+interface PostsState extends EntityState<Post, string> {}
 
 
 const postsAdapter = createEntityAdapter<Post>({
@@ -49,236 +29,148 @@ const postsAdapter = createEntityAdapter<Post>({
 });
 
 
-const initialState: PostsState = postsAdapter.getInitialState({
-   status: {
-      fetchPosts: 'idle',
-      addPost: 'idle',
-      editPost: 'idle',
-      deletePost: 'idle',
-   },
-   error: {
-      fetchPosts: null,
-      addPost: null,
-      editPost: null,
-      deletePost: null,
-   },
-})
+const initialState: PostsState = postsAdapter.getInitialState();
 
 
-const postsSlice = createSlice({
-   name: 'posts',
-   initialState,
-   reducers: {
-      addReaction: (state, action: PayloadAction<{postId: string; reactionName: string}>) => {
-         const { postId, reactionName } = action.payload;
-         const existingPost = state.entities[postId];
-       
-         if (isFinite(existingPost.reactions[reactionName])) {
-            existingPost.reactions[reactionName] += 1;
-         }
-      },
-      removeReaction: (state, action: PayloadAction<{postId: string; reactionName: string}>) => {
-         const { postId, reactionName } = action.payload;
-         const existingPost = state.entities[postId];
-         if (isFinite(existingPost.reactions[reactionName])) {
-            existingPost.reactions[reactionName] -= 1;
-         }
-      }
-   },
-   extraReducers: (builder) => {
-      builder
-      .addCase(fetchPosts.fulfilled, (state, action: PayloadAction<Post[]>) => {
-         postsAdapter.upsertMany(state, action.payload);
-         state.status.fetchPosts = 'succeed';
-      })
-      .addCase(fetchPost.fulfilled, (state, action: PayloadAction<Post>) => {
-         postsAdapter.setOne(state, action.payload);
-      })
-      .addCase(addPost.fulfilled, (state, action: PayloadAction<Post>) => {
-         postsAdapter.addOne(state, action.payload);
-         state.status.addPost = 'succeed';
-      })
-      .addCase(editPost.fulfilled, (state, action: PayloadAction<Post>) => {
-         const { id, title, content } = action.payload;
-         postsAdapter.updateOne(state, {
-            id,
-            changes: {
-               title,
-               content,
-            }
-         });
-         state.status.editPost = 'succeed';
-      })
-      .addCase(deletePost.fulfilled, (state, action: PayloadAction<string>) => {
-         const postId = action.payload;
-         postsAdapter.removeOne(state, postId);
-         state.status.deletePost = 'succeed';
-      })
-      .addMatcher(
-         (action) => {
-            return (
-               ['fetchPosts', 'editPost', 'addPost', 'deletePost'].includes(action.type.slice(0, action.type.indexOf('/'))) &&
-               action.type.slice(action.type.indexOf('/') + 1) === 'pending'
-            )
+export const apiSliceWithPosts = apiSlice.injectEndpoints({
+   endpoints: (builder) => ({
+      getPosts: builder.query<PostsState, void>({
+         query: () => '/posts',
+         transformResponse: (result: Post[], meta, arg) => {
+            return postsAdapter.setAll(initialState, result);
          },
-         (state, action) => {
-            const op = action.type.slice(0, action.type.indexOf('/'));
-            state.status[op] = 'pending';
-         } 
-      )
-      .addMatcher(
-         isRejected(fetchPosts, editPost, addPost, deletePost),
-         (state, action) => {
-           const op = action.type.split('/')[0];
-           state.status[op] = 'failed';
-           state.error[op] = (
-             action.payload as { message: string } || 
-             action.error as { message: string } || 
-             { message: 'Unknown Error' }
-           ).message;
-         }
-      )
-   }
+         providesTags: (result, error, arg) => (
+            (result) ? (
+               [
+                  ...(Object.values(result?.ids).map((id) => ({ type: 'POST' as const, id }))),
+                  { type: 'POST', id: 'LIST' },
+               ]
+            ) : (
+               [
+                  { type: 'POST', id: 'LIST' },
+               ]
+            )
+         )
+      }),
+      getPost: builder.query<Post, string>({
+         query: (postId) => `/posts/${postId}`,
+         providesTags: (result, error, arg) => [
+            { type: 'POST', id: arg },
+         ]
+      }),
+      addPost: builder.mutation<Post, Post>({
+         query: (post) => ({
+            url: `/posts`,
+            method: 'POST',
+            body: post,
+         }),
+         invalidatesTags: [
+            {type: 'POST', id: 'LIST'},
+         ]
+      }),
+      editPost: builder.mutation<Post, Post>({
+         query: (post) => ({
+            url: `/posts/${post.id}`,
+            method: 'PUT',
+            body: post,
+         }),
+         invalidatesTags: (result, error, arg) => [
+            { type: 'POST', id: arg.id },
+         ]
+      }),
+      deletePost: builder.mutation<void, string>({
+         query: (postId) => ({
+            url: `/posts/${postId}`,
+            method: 'DELETE',
+         }),
+         invalidatesTags: [
+            {type: 'POST', id: 'LIST'},
+         ]
+      }),
+      // + for this endpoint, we must send the 'updated reactions' object inside our 'postPatch' object (so we must write the reaction-update logic inside the call-site(component))
+      updatePostReaction: builder.mutation<void, Pick<Post, 'id' | 'reactions'>>({
+         query: (postPatch) => ({
+            url: `/posts/${postPatch.id}`,
+            method: 'PATCH',
+            body: postPatch,
+         }),
+         async onQueryStarted( { id: postId, reactions }, lifecycleApi ) {
+
+            // + posts-list update
+            const getPostsPatchResult = lifecycleApi.dispatch(
+
+               apiSliceWithPosts.util.updateQueryData('getPosts', undefined, (draft) => {
+
+                  
+                  const existingPost = Object.values(draft.entities).find(post => post.id === postId);
+                  if (existingPost) {
+                     existingPost.reactions = { ...reactions };
+                  }
+               })
+            )
+
+            // + single-post update
+            const getPostPatchResult = lifecycleApi.dispatch(
+
+               apiSliceWithPosts.util.updateQueryData('getPost', postId, (draft) => {
+
+                  if (draft) {
+                     draft.reactions = { ...reactions };
+                  }
+               })
+            )
+
+            try {
+               await lifecycleApi.queryFulfilled;
+            } catch {
+               getPostsPatchResult.undo();
+               getPostPatchResult.undo();
+            }
+         },
+      }),
+   })
 });
+
+
+
+// const postsSlice = createSlice({
+//    name: 'posts',
+//    initialState,
+//    reducers: {
+//       addReaction: (state, action: PayloadAction<{postId: string; reactionName: string}>) => {
+//          const { postId, reactionName } = action.payload;
+//          const existingPost = state.entities[postId];
+       
+//          if (isFinite(existingPost.reactions[reactionName])) {
+//             existingPost.reactions[reactionName] += 1;
+//          }
+//       },
+//       removeReaction: (state, action: PayloadAction<{postId: string; reactionName: string}>) => {
+//          const { postId, reactionName } = action.payload;
+//          const existingPost = state.entities[postId];
+//          if (isFinite(existingPost.reactions[reactionName])) {
+//             existingPost.reactions[reactionName] -= 1;
+//          }
+//       }
+//    },
+//    extraReducers: (builder) => {
+//    }
+// });
 
 
 // Thunks
-export const fetchPosts = createAsyncThunk('fetchPosts', async () => {
-   const response = await getPostsServer();
-   return response.data;
-});
-
-export const fetchPost = createAsyncThunk('fetchPost', async (postId: string) => {
-   const response = await getPostServer(postId);
-   return response.data;
-});
-
-export const addPost = createAsyncThunk('addPost', async (post: Post) => {
-   const response = await addPostServer(post);
-   return response.data;
-});
-
-export const editPost = createAsyncThunk('editPost', async (post: Post) => {
-   const response = await updatePostServer(post, post.id);
-   return response.data;
-});
-
-export const deletePost = createAsyncThunk('deletePost', async (postId: string) => {
-   await deletePostServer(postId);
-   return postId;
-});
-
-
-export const addPostReaction = ({postId, reactionName}: { postId: string; reactionName: string }): AppThunk => {
-   return async (dispatch, getState) => {
-
-      const post = selectPostById(getState(), postId);
-      if (!isFinite(post.reactions[reactionName])) return;
-      const prevPostReactionTotal = post.reactions[reactionName];
-
-
-      dispatch(
-         addReaction({ postId: postId, reactionName })
-      )
-
-
-      try {
-         await updatePostReactionServer(
-            {
-               id: postId,
-               reactions: {
-                  ...post.reactions,
-                  [reactionName]: prevPostReactionTotal + 1,
-               }
-            },
-            postId
-         )
-      } catch (error) {
-         dispatch(
-            removeReaction({ postId: postId, reactionName })
-         );
-         throw(error);  // the error is 're-throwed' to 'UI', and it is handled there...
-      }
-
-   }
-}
-
-
-export const removePostReaction = ({postId, reactionName}: { postId: string; reactionName: string }): AppThunk => {
-   return async (dispatch, getState) => {
-
-      const post = selectPostById(getState(), postId);
-      if (!isFinite(post.reactions[reactionName])) return;
-      const prevPostReactionTotal = post.reactions[reactionName];
-      if (prevPostReactionTotal <= 0) return;   // We dont want 'negative' reaction-value!
-
-
-      dispatch(
-         removeReaction({ postId: postId, reactionName })
-      )
-
-
-      try {
-         await updatePostReactionServer(
-            {
-               id: postId,
-               reactions: {
-                  ...post.reactions,
-                  [reactionName]: prevPostReactionTotal - 1,
-               }
-            },
-            postId
-         )
-      } catch (error) {
-         dispatch(
-            addReaction({ postId: postId, reactionName })
-         );
-         throw(error);  // the error is 're-throwed' to 'UI', and it is handled there...
-      }
-
-   }
-}
 
 
 // Listeners
-export const addReactionListener = (startAppListening: AppStartListening) => {
-
-   startAppListening(
-      {
-         actionCreator: addUserReactionFulfilled,
-         effect: (action, { dispatch }) => {
-            const { userId, postId, reactionName } = action.payload;
-            dispatch(
-               addPostReaction({
-                  postId,
-                  reactionName,
-               })
-            )
-         }
-      }
-   )
-}
-
-export const removeReactionListener = (startAppListening: AppStartListening) => {
-
-   startAppListening(
-      {
-         actionCreator: removeUserReactionFulfilled,
-         effect: (action, { dispatch }) => {
-            const { userId, postId, reactionName } = action.payload;
-            dispatch(
-               removePostReaction({
-                  postId,
-                  reactionName,
-               })
-            )
-         }
-      }
-   )
-}
 
 
 // Selectors
+const selectPostsResult = apiSliceWithPosts.endpoints.getPosts.select();  // selects 'response data'
+                
+const selectPostsData = createSelector(
+   selectPostsResult,   // response data
+   (postsResult) => postsResult.data  // cached-data (entities)
+);
 
 export const {
    selectAll: selectAllPosts,
@@ -286,23 +178,28 @@ export const {
    selectIds: selectPostsIds,
    selectEntities: selectPostsEntities,
    selectTotal: selectPostsTotal,
-} = postsAdapter.getSelectors((state: RootState) => state.posts);
+} = postsAdapter.getSelectors((state: RootState) => selectPostsData(state) ?? initialState);
 
 
-export const selectUserPosts = createSelector(  // args: state, userId
+export const selectUserPostsIds = createSelector(  // args: state, userId
    selectAllPosts,
    (_, userId: string) => userId,
    (allPosts: Post[], userId: string) => allPosts.filter(post => post.userId === userId).map(post => post.id)
 );
 
-export const selectPostsStatus = (state: RootState) => state.posts.status;
-export const selectPostsError = (state: RootState) => state.posts.error;
+
 
 // Actions
+
+// RTK-Q Hooks
 export const {
-   removeReaction,
-   addReaction,
-} = postsSlice.actions;
+   useGetPostsQuery,
+   useGetPostQuery,
+   useAddPostMutation,
+   useEditPostMutation,
+   useDeletePostMutation,
+   useUpdatePostReactionMutation,
+} = apiSliceWithPosts;
 
 
-export default postsSlice;
+// export default postsSlice;
