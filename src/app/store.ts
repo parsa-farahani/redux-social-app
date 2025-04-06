@@ -1,11 +1,13 @@
-import { type Action, applyMiddleware, combineReducers, compose, createStore, type StoreEnhancer } from "redux";
+import { type Action, applyMiddleware, compose, createStore, type StoreEnhancer } from "redux";
 import { thunk, type ThunkAction } from "redux-thunk";
 import { composeWithDevTools } from 'redux-devtools-extension';
 import rootReducer from "./reducers";
-// import {immutableStateInvariant} from 'redux-immutable-state-invariant';
+import createSagaMiddleware from 'redux-saga';
+import rootSaga from "./rootSaga";
 
 // Middlewares
-const middleware = [thunk];
+const sagaMiddleware = createSagaMiddleware();
+const middleware = [thunk, sagaMiddleware];
 
 if (process.env.NODE_ENV === 'development') {
 
@@ -29,6 +31,9 @@ const store = createStore(
    undefined,
    composeEnhancers(applyMiddleware(...middleware), ...enhancers)
 )
+
+
+sagaMiddleware.run(rootSaga);
 
 export default store;
 

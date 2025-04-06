@@ -3,6 +3,8 @@ import { AppDispatch, type AppThunk, type RootState } from "../../app/store";
 import { addPostServer, deletePostServer, getPostServer, getPostsServer, updatePostReactionServer, updatePostServer } from '../../services/postsServices'
 import { type AppStartListening, startAppListening } from "../../app/listenerMiddleware";
 import { addUserReaction, addUserReactionFulfilled, removeUserReactionFulfilled } from "../users/usersSlice";
+import createReducer from "../../app/utils/createReducer";
+import { type FetchPostsPendingAction, POSTS_FETCH_FULFILLED, POSTS_FETCH_PENDING, POSTS_FETCH_REJECTED } from "./constants/actions";
 
 interface PostReactions {
    [index: string]: number;
@@ -38,18 +40,32 @@ interface PostsError {
    editPost: OpError;
    deletePost: OpError;
 }
-interface PostsState extends EntityState<Post, string> {
+interface PostsState {
+   ids: string[];
+   entities: {
+      [id: string]: Post;
+   };
    status: PostsStatus;
    error: PostsError;
 }
 
 
-const postsAdapter = createEntityAdapter<Post>({
-   sortComparer: (a, b) => b.date.localeCompare(a.date),
-});
+interface PostEntity {
+   [id: string]: Post;
+}
 
 
-const initialState: PostsState = postsAdapter.getInitialState({
+const postsAdapter = createEntityAdapter()
+
+
+
+// Action-Types
+
+
+
+const initialState: PostsState = {
+   ids: [],
+   entities: {},
    status: {
       fetchPosts: 'idle',
       addPost: 'idle',
@@ -62,7 +78,34 @@ const initialState: PostsState = postsAdapter.getInitialState({
       editPost: null,
       deletePost: null,
    },
+}
+
+
+const postsReducer = createReducer(initialState, {
+   [POSTS_FETCH_PENDING]: (state) => {
+      state.status.fetchPosts = 'pending';
+   },
+   [POSTS_FETCH_FULFILLED]: (state, action: { type: typeof POSTS_FETCH_FULFILLED, payload: Post[] }) => {
+      const byId = action.payload.reduce((byId, post) => {
+         byId[post.id] = post;
+         return byId;
+      }, {} as PostEntity)
+      state.entities = byId;
+      state.ids = Object.keys(byId);
+      state.error.fetchPosts = null;
+      state.status.fetchPosts = 'succeed';
+   },
+   [POSTS_FETCH_REJECTED]: (state, action: { type: typeof POSTS_FETCH_REJECTED, error: unknown }) => {
+      state.error.fetchPosts = action.error;
+      state.status.fetchPosts = 'failed';
+   },
+});
+
+
+export const fetchPostsPending = (): FetchPostsPendingAction => ({
+   type: POSTS_FETCH_PENDING,
 })
+
 
 
 const postsSlice = createSlice({
@@ -298,11 +341,8 @@ export const selectUserPosts = createSelector(  // args: state, userId
 export const selectPostsStatus = (state: RootState) => state.posts.status;
 export const selectPostsError = (state: RootState) => state.posts.error;
 
-// Actions
-export const {
-   removeReaction,
-   addReaction,
-} = postsSlice.actions;
+// Actions-Creators
 
 
-export default postsSlice.reducer;
+
+export default postsReducer;

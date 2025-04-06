@@ -2,7 +2,7 @@
 
 ## Technologies Used:
   - React (+ React-Router-DOM)
-  - Redux
+  - Redux (+ Redux-Saga, Immer)
   - TypeScript
   - Material UI 
 

@@ -1,6 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
 import type { RootState } from "../../app/store";
-import { createAppSlice } from "../../app/createAppSlice";
+import createReducer from "../../app/utils/createReducer";
 
 
 interface SettingsState {
@@ -15,27 +14,59 @@ const initialState: SettingsState = {
 }
 
 
-const settingsSlice = createAppSlice({
-   name: 'settings',
-   initialState,
-   reducers: (create) => ({
-      setDarkMode: create.reducer((state) => {
+
+// Action-Types
+const SET_DARK_MODE = 'settings/SET_DARK_MODE';
+const SET_LIGHT_MODE = 'settings/SET_LIGHT_MODE';
+const TOGGLE_DARK_MODE = 'settings/TOGGLE_DARK_MODE';
+const COLORED_AVATARS = 'settings/COLORED_AVATARS';
+const NOT_COLORED_AVATARS = 'settings/NOT_COLORED_AVATARS';
+
+
+
+const settingsReducer = createReducer(initialState,
+   {
+      [SET_DARK_MODE]: (state) => {
          state.isDarkMode = true;
-      }),
-      setLightMode: create.reducer((state) => {
+      },
+      [SET_LIGHT_MODE]: (state) => {
          state.isDarkMode = false;
-      }),
-      toggleDarkMode: create.reducer((state) => {
+      },
+      [TOGGLE_DARK_MODE]: (state) => {
          state.isDarkMode = !state.isDarkMode;
-      }),
-      coloredAvatars: create.reducer((state) => {
+      },
+      [COLORED_AVATARS]: (state) => {
          state.isColoredAvatars = true;
-      }),
-      notColoredAvatars: create.reducer((state) => {
+      },
+      [NOT_COLORED_AVATARS]: (state) => {
          state.isColoredAvatars = false;
-      })
-   })
-});
+      },
+   }
+);
+
+
+
+// Action-Creators
+export const setDarkMode = () => ({
+   type: SET_DARK_MODE,
+})
+
+export const setLightMode = () => ({
+   type: SET_LIGHT_MODE,
+})
+
+export const toggleDarkMode = () => ({
+   type: TOGGLE_DARK_MODE,
+})
+
+export const coloredAvatars = () => ({
+   type: COLORED_AVATARS,
+})
+
+export const notColoredAvatars = () => ({
+   type: NOT_COLORED_AVATARS,
+})
+
 
 
 // selectors
@@ -43,14 +74,5 @@ export const selectIsDarkMode = (state: RootState) => state.settings.isDarkMode;
 export const selectIsColoredAvatars = (state: RootState) => state.settings.isColoredAvatars;
 
 
-export const {
-   setDarkMode,
-   setLightMode,
-   toggleDarkMode,
-   coloredAvatars,
-   notColoredAvatars,
-} = settingsSlice.actions;
 
-
-
-export default settingsSlice.reducer;
+export default settingsReducer;
