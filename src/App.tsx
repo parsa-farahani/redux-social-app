@@ -14,13 +14,14 @@ import {
    NotFound,
 } from "./pages";
 import { useEffect } from "react";
-import { useAppDispatch } from "./app/hooks";
+import { useAppDispatch, useAppSelector } from "./app/hooks";
 import {  useMediaQuery } from "@mui/material";
 import { setDarkMode, setLightMode } from "./features/settings/settingsSlice";
 import PageContainer from "./containers/PageContainer";
 import ErrorTest from "./pages/ErrorTest";
 import AuthProtect from "./pages/protect/AuthProtect";
 import { Bounce, ToastContainer } from 'react-toastify';
+import { selectAuthUsername } from "./features/auth/authSlice";
 
 
 
@@ -32,6 +33,7 @@ const App = () => {
 
    // Redux
    const dispatch = useAppDispatch();
+   const authUsername = useAppSelector(selectAuthUsername);
 
    // * changing the dark/light theme based on 'User Preference'
    useEffect(() => {
@@ -48,7 +50,7 @@ const App = () => {
          <MainMUILayout>
             <Routes>
                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<Navigate to="/login" />} />
+                  <Route index element={<Navigate to={(authUsername == null) ? "/login" : "/posts"} />} />
                   <Route
                      path="/error-test"
                      element={

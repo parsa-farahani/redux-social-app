@@ -144,4 +144,4 @@ export const selectCommentsError = (state: RootState) => state.comments.error;
 // Actions
 
 
-export default commentsSlice;
+export default commentsSlice.reducer;

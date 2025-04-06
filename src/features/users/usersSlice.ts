@@ -258,4 +258,4 @@ export const {
    userReactionRemoved,
 } = usersSlice.actions;
 
-export default usersSlice;
+export default usersSlice.reducer;

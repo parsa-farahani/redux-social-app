@@ -305,4 +305,4 @@ export const {
 } = postsSlice.actions;
 
 
-export default postsSlice;
+export default postsSlice.reducer;

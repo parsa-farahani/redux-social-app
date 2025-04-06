@@ -2,7 +2,7 @@ import { Button, FormControl, InputLabel, MenuItem, Select, type SelectChangeEve
 import MainPageLayout from "../layouts/MainPageLayout";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { login } from "../features/auth/authSlice";
+import { login, selectAuthUsername } from "../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
 import { fetchUsers, selectAllUsers, selectUsersStatus } from "../features/users/usersSlice";
 import SnackToast from "../components/common/notification/SnackToast";
@@ -19,6 +19,7 @@ const Login = () => {
 
    // redux
    const dispatch = useAppDispatch();
+   const authUsername = useAppSelector(selectAuthUsername);
    const users = useAppSelector(selectAllUsers) ?? [];
    const { fetchUsers: usersFetchStatus } = useAppSelector(selectUsersStatus)
    const isLoadingUsers = usersFetchStatus === 'pending';

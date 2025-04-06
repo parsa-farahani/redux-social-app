@@ -53,4 +53,4 @@ export const {
 
 
 
-export default settingsSlice;
+export default settingsSlice.reducer;
