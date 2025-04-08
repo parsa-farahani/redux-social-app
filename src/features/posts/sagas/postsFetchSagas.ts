@@ -1,8 +1,6 @@
 import {
    call,
-   type CallEffect,
    put,
-   type PutEffect,
    takeEvery,
    takeLatest,
 } from "redux-saga/effects";
@@ -31,7 +29,6 @@ function* fetchPosts(action: FetchPostsAction) {
          axios.get,
          'http://localhost:9393/posts' 
       );
-      console.log(response);
       yield put({ type: POSTS_FETCH_FULFILLED, payload: response.data });
    } catch (error) {
       yield put({ type: POSTS_FETCH_REJECTED, error: error });

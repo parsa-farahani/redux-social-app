@@ -3,14 +3,14 @@ import { useFormik } from "formik";
 import { addPostSchema } from "../validations/addPostValidation";
 import { Box, Button, useTheme } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { addPost, selectPostsStatus } from "../features/posts/postsSlice";
-import { nanoid } from "@reduxjs/toolkit";
+import { addPost, addPostPending, selectPostsError, selectPostsStatus } from "../features/posts/postsSlice";
 import { useNavigate } from "react-router-dom";
 import { selectAuthUsername } from "../features/auth/authSlice";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
 import { AddPostContentTextField, AddPostTitleTextField } from "./AddPost.styles";
-
+import { nanoid } from 'nanoid'
+import { getErrorMessage } from "../utils/errorUtils/errorUtils";
 
 
 
@@ -41,19 +41,35 @@ const AddPost = () => {
    const dispatch = useAppDispatch();
    const authUsername = useAppSelector(selectAuthUsername);
    const { addPost: addPostStatus } = useAppSelector(selectPostsStatus);
+   const { addPost: addPostError } = useAppSelector(selectPostsError);
    
    const isPendingAddPost = addPostStatus === 'pending';
+   const isSuccessAddPost = addPostStatus === 'succeed';
+   const isErrorAddPost = addPostStatus === 'failed';
    
 
    const canSubmit = (!isPendingAddPost);  // emptiness of inputs are handled by 'formik + yup'
+
+
+   useEffect(() => {
+      if (isSuccessAddPost) {
+         toast.success("The post is added successfully!");
+         navigate(`/users/${authUsername}`);
+      }
+      if (isErrorAddPost) {
+         console.error(addPostError);
+         const errorMessage = getErrorMessage(addPostError, 'Failed to add post');
+         toast.error(errorMessage);
+      }
+   }, [isSuccessAddPost, isErrorAddPost, addPostError, navigate, authUsername])
 
 
    const handleSubmitPost = async (formikValues: { title: string; content: string }) => {
       if (authUsername == null) return;
 
       try {
-         await dispatch(
-            addPost({
+         dispatch(
+            addPostPending({
                id: nanoid(),
                title: formikValues.title,
                content: formikValues.content,
@@ -64,21 +80,21 @@ const AddPost = () => {
                   dislike: 0,
                }
             })
-         ).unwrap();
-         toast.success("The post is added successfully!");
-         navigate(`/users/${authUsername}`);
+         );
+         // toast.success("The post is added successfully!");
+         // navigate(`/users/${authUsername}`);
       } catch (error) {
          console.error(error);
 
-         let errorMessage = 'Failed to add post';
-         if (error instanceof Error) {
-           errorMessage = error.message;
-         } else if (typeof error === 'object' && error !== null && 'message' in error) {
-           errorMessage = String(error.message);
-         } else if (typeof error === 'string') {
-           errorMessage = error;
-         }
-         toast.error(errorMessage);
+         // let errorMessage = 'Failed to add post';
+         // if (error instanceof Error) {
+         //   errorMessage = error.message;
+         // } else if (typeof error === 'object' && error !== null && 'message' in error) {
+         //   errorMessage = String(error.message);
+         // } else if (typeof error === 'string') {
+         //   errorMessage = error;
+         // }
+         // toast.error(errorMessage);
       }
    }
 

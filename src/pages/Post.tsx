@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
    Box,
+   Button,
    Divider,
    Stack,
    Typography,
@@ -13,6 +14,7 @@ import {
    deletePost,
    editPost,
    fetchPost,
+   fetchPostPending,
    selectPostById,
    selectPostsError,
    selectPostsStatus,
@@ -62,8 +64,8 @@ const Post = () => {
    const { postId } = useParams();
 
    // states
-   const [postFetchStatus, setPostFetchStatus] = useState("idle");
-   const [postFetchError, setPostFetchError] = useState<string | null>(null);
+   // const [postFetchStatus, setPostFetchStatus] = useState("idle");
+   // const [postFetchError, setPostFetchError] = useState<string | null>(null);
    const [isEditMode, setIsEditMode] = useState(false);
 
    const [isOpenDeletionModal, setIsOpenDeletionModal] = useState(false);
@@ -74,12 +76,19 @@ const Post = () => {
    const postAuthor = useAppSelector((state) =>
       selectUserById(state, post?.userId),
    );
-   const { editPost: postEditStatus, deletePost: postDeleteStatus } =
+   const { fetchPost: fetchPostStatus, editPost: postEditStatus, deletePost: postDeleteStatus } =
       useAppSelector(selectPostsStatus);
+
+   const postFetchStatus = fetchPostStatus[postId!];
+
    const {
+      fetchPost: fetchPostError,
       editPost: postEditError,
       deletePost: postDeleteError,
    } = useAppSelector(selectPostsError);
+
+   const postFetchError = fetchPostError[postId!];
+
    const authUsername = useAppSelector(selectAuthUsername);
    const authUserReaction =
       useAppSelector((state) =>
@@ -93,6 +102,7 @@ const Post = () => {
    const isPendingFetchPost = postFetchStatus === "pending";
    const isFailedFetchPost = postFetchStatus === "failed";
 
+
    const isSuccessEditPost = postEditStatus === "succeed";
    const isPendingEditPost = postEditStatus === "pending";
    const isFailedEditPost = postEditStatus === "failed";
@@ -100,6 +110,8 @@ const Post = () => {
    const isSuccessDeletePost = postDeleteStatus === "succeed";
    const isPendingDeletePost = postDeleteStatus === "pending";
    const isFailedDeletePost = postDeleteStatus === "failed";
+
+
 
    // reaction
    const handleRemoveReaction = async (reactionName: string) => {
@@ -286,22 +298,24 @@ const Post = () => {
       setIsOpenDeletionModal(false);
    };
 
+   const refetchPost = () => {
+      dispatch(
+         fetchPostPending(postId!)
+      );
+   }
+
    useEffect(() => {
-      if (postFetchStatus !== "idle") return;
+      if (postFetchStatus) return;
       let ignore = false;
 
       const fetchPostInEffect = async () => {
-         setPostFetchStatus("pending");
          try {
             await dispatch(
-               fetchPost(postId!)
-            ).unwrap();
-            setPostFetchStatus("succeed");
-            setPostFetchError(null);
+               fetchPostPending(postId!)
+            );
          } catch (error) {
             console.error(error);
 
-            setPostFetchStatus("failed");
 
             let errorMessage = "Failed to Fetch post";
             if (error instanceof Error) {
@@ -315,7 +329,7 @@ const Post = () => {
             } else if (typeof error === "string") {
                errorMessage = error;
             }
-            setPostFetchError(errorMessage);
+            toast.error(errorMessage);
          }
       };
 
@@ -328,6 +342,7 @@ const Post = () => {
       };
    }, [dispatch, postId, postFetchStatus]);
 
+   
    // Disabling the 'editMode' when we leave this page
    useEffect(() => {
       return () => {
@@ -337,16 +352,14 @@ const Post = () => {
 
 
    let postsContent;
-   if (!post) {
-      postsContent = <ErrorMsg text="404 - Not Found the Post" />;
-   } else if (isPendingFetchPost || isPendingDeletePost) {
+   if (isPendingFetchPost || isPendingDeletePost) {
       postsContent = (
          <Spinner
             text={isPendingFetchPost ? "Loading..." : "Deleting..."}
             variant="fixed"
          />
       );
-   } else if (isSuccessFetchPost) {
+   } else if (isSuccessFetchPost && post) {
       postsContent = (
          <>
             { /* this form works with formik to handle edit-post behavior */ }
@@ -470,7 +483,18 @@ const Post = () => {
       );
    } else if (isFailedFetchPost) {
       postsContent = (
-         <ErrorMsg text={postFetchError?.toString() ?? "Unknown Erorr"} />
+         <Stack direction="column" spacing={1} >
+            <Box >
+               <ErrorMsg text={postFetchError?.toString() ?? "Unknown Erorr"} />
+            </Box>
+            <Button
+               variant="contained"
+               onClick={refetchPost}
+               sx={{ width: 'fit-content', bgcolor: 'secondary.dark', borderRadius: '100vw' }}
+            >
+               Try Again
+            </Button>
+         </Stack>
       );
    } else {
       postsContent = <ErrorMsg text="404 - Not Fount the Post!" />;

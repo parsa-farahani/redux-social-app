@@ -3,12 +3,13 @@ import PostExcerpt from "../components/post/PostExcerpt";
 import MainPageLayout from "../layouts/MainPageLayout";
 import PostSkeleton from "../components/loading/skeleton/PostSkeleton";
 import React, { useEffect } from "react";
-import { fetchPosts, selectPostsError, selectPostsIds, selectPostsStatus } from "../features/posts/postsSlice";
+import { fetchPosts, fetchPostsPending, selectPostsError, selectPostsIds, selectPostsStatus } from "../features/posts/postsSlice";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import ErrorMsg from "../components/common/error/ErrorMsg";
 import { selectAuthUsername } from "../features/auth/authSlice";
 import { selectUserReactions } from "../features/users/usersSlice";
 import PostsBottomOffset from "../components/pages/Posts/PostsBottomOffset";
+import { toast } from "react-toastify";
 
 
 const MemoizedPostExcerpt = React.memo(PostExcerpt);
@@ -32,13 +33,35 @@ const Posts = () => {
    const isAuth = Boolean(authUsername);
 
 
+   const refetchPosts = async() => {
+      
+      try {
+         await dispatch(
+            fetchPostsPending()
+         )
+      } catch (error) {
+         console.error(error);
+
+         let errorMessage = 'Failed to Fetch posts';
+         if (error instanceof Error) {
+         errorMessage = error.message;
+         } else if (typeof error === 'object' && error !== null && 'message' in error) {
+         errorMessage = String(error.message);
+         } else if (typeof error === 'string') {
+         errorMessage = error;
+         }
+         toast.error(errorMessage);
+      }
+   }
+
+   
    useEffect(() => {
       if (postsFetchStatus !== 'idle') return;
       let ignore = false;
 
       if (!ignore) {
          dispatch(
-            fetchPosts()
+            fetchPostsPending()
          )
       }
 

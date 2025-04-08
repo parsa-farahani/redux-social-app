@@ -5,9 +5,11 @@ import PostExcerpt from "../components/post/PostExcerpt";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
    fetchPosts,
+   fetchPostsPending,
    selectPostsError,
    selectPostsStatus,
    selectUserPosts,
+   selectUserPostsIds,
 } from "../features/posts/postsSlice";
 import React, { useEffect, useState } from "react";
 import {
@@ -37,7 +39,7 @@ const User = () => {
    // redux
    const dispatch = useAppDispatch();
    const userPostsIds =
-      useAppSelector((state) => selectUserPosts(state, userId!)) ?? [];
+      useAppSelector((state) => selectUserPostsIds(state, userId!)) ?? [];
    // const userRactions = useAppSelector(state => selectUserReactions(state, userId!));
    const authUsername = useAppSelector(selectAuthUsername);
    const authUserReactions = useAppSelector((state) =>
@@ -58,13 +60,14 @@ const User = () => {
       let ignore = false;
 
       if (!ignore) {
-         dispatch(fetchPosts());
+         dispatch(fetchPostsPending());
       }
 
       return () => {
          ignore = true;
       };
    }, [dispatch, postsFetchStatus]);
+
 
    // Fetching user-data
    useEffect(() => {
