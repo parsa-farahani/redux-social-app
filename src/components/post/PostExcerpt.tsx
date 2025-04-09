@@ -20,7 +20,11 @@ import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import PostReactionButton from "./PostReactionButton";
 import { addUserReaction, removeUserReaction } from "../../features/users/usersSlice";
 import { toast } from "react-toastify";
+import React from "react";
+import { getErrorMessage } from "../../utils/errorUtils/errorUtils";
 
+
+const MemoizedPostAuthor = React.memo(PostAuthor);
 
 interface PostExcerptProps {
    postId: string;
@@ -67,18 +71,7 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
       } catch (error) {
          console.error(error);
 
-         let errorMessage = "Failed to edit post";
-         if (error instanceof Error) {
-            errorMessage = error.message;
-         } else if (
-            typeof error === "object" &&
-            error !== null &&
-            "message" in error
-         ) {
-            errorMessage = String(error.message);
-         } else if (typeof error === "string") {
-            errorMessage = error;
-         }
+         let errorMessage = getErrorMessage(error, "Failed to remove reaction");
          toast.error(errorMessage);
       }
    }
@@ -107,19 +100,19 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
       if (  // If user has changed his/her reaction from like <-> dislike, we should first 'remove' the opposite reaction
          isOppositeReaction   
       ) {
-         const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
+         // const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
 
          try {
 
-            await dispatch(
-               removeUserReaction(
-                  {
-                     userId: authUsername,
-                     postId: postId,
-                     reactionName: oppositeReactionName,
-                  }
-               )
-            )
+            // await dispatch(
+            //    removeUserReaction(
+            //       {
+            //          userId: authUsername,
+            //          postId: postId,
+            //          reactionName: oppositeReactionName,
+            //       }
+            //    )
+            // )
 
             await dispatch(
                addUserReaction(
@@ -133,19 +126,7 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
    
          } catch (error) {
             console.error(error);
-
-            let errorMessage = "Failed to edit post";
-            if (error instanceof Error) {
-               errorMessage = error.message;
-            } else if (
-               typeof error === "object" &&
-               error !== null &&
-               "message" in error
-            ) {
-               errorMessage = String(error.message);
-            } else if (typeof error === "string") {
-               errorMessage = error;
-            }
+            let errorMessage = getErrorMessage(error, "Failed to add reaction");
             toast.error(errorMessage);
          }
       } else {
@@ -164,19 +145,7 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
    
          } catch (error) {
             console.error(error);
-
-            let errorMessage = "Failed to edit post";
-            if (error instanceof Error) {
-               errorMessage = error.message;
-            } else if (
-               typeof error === "object" &&
-               error !== null &&
-               "message" in error
-            ) {
-               errorMessage = String(error.message);
-            } else if (typeof error === "string") {
-               errorMessage = error;
-            }
+            let errorMessage = getErrorMessage(error, "Failed to add reaction");
             toast.error(errorMessage);
          }
       }
@@ -206,7 +175,7 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
                   <MdMoreVert />
                </IconButton>
             }
-            title={(type === "posts") && <PostAuthor userId={post.userId} />}
+            title={(type === "posts") && <MemoizedPostAuthor userId={post.userId} />}
             subheader={
                <Typography
                   variant="body2"

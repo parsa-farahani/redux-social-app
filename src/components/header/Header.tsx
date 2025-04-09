@@ -214,7 +214,10 @@ const Header = () => {
 
                               return (
                                  <HeaderNavLink key={navData.title}>
-                                    <NavLink end to={navData.href}>
+                                    <NavLink
+                                       to={navData.href} 
+                                       end
+                                    >
                                        {navData.title}
                                     </NavLink>
                                  </HeaderNavLink>

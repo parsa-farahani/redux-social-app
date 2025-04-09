@@ -12,6 +12,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import "./assets/style/index.css";
 import AppErrorFallback from "./components/errorBoundary/AppErrorFallback";
 
+
+
 const container = document.getElementById("root");
 
 
@@ -19,7 +21,7 @@ if (container) {
    const root = createRoot(container);
 
    root.render(
-      <React.StrictMode>
+      // <React.StrictMode>
          <ErrorBoundary FallbackComponent={AppErrorFallback} >
             <HelmetProvider>
                <BrowserRouter>
@@ -29,7 +31,7 @@ if (container) {
                </BrowserRouter>
             </HelmetProvider>
          </ErrorBoundary>
-      </React.StrictMode>,
+      // </React.StrictMode>,
    );
 } else {
    throw new Error(

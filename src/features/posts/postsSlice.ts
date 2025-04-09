@@ -2,9 +2,56 @@ import { createAsyncThunk, createEntityAdapter, createSlice, type PayloadAction,
 import { AppDispatch, type AppThunk, type RootState } from "../../app/store";
 import { addPostServer, deletePostServer, getPostServer, getPostsServer, updatePostReactionServer, updatePostServer } from '../../services/postsServices'
 import { type AppStartListening, startAppListening } from "../../app/listenerMiddleware";
-import { addUserReaction, addUserReactionFulfilled, removeUserReactionFulfilled } from "../users/usersSlice";
+import { addUserReaction } from "../users/usersSlice";
 import createReducer from "../../app/utils/createReducer";
-import { AddPostFulfilledAction, AddPostPendingAction, AddPostRejectedAction, FetchPostFulfilledAction, FetchPostPendingAction, FetchPostRejectedAction, type FetchPostsFulfilledAction, type FetchPostsPendingAction, type FetchPostsRejectedAction, POST_ADD_FULFILLED, POST_ADD_PENDING, POST_ADD_REJECTED, POST_FETCH_FULFILLED, POST_FETCH_PENDING, POST_FETCH_REJECTED, POSTS_FETCH_FULFILLED, POSTS_FETCH_PENDING, POSTS_FETCH_REJECTED } from "./constants/actions";
+import {
+   ADD_REACTION_PENDING,
+   type AddPostFulfilledAction,
+   type AddPostIdleAction,
+   type AddPostPendingAction,
+   type AddPostReactionAction,
+   type AddPostReactionPendingAction,
+   type AddPostRejectedAction,
+   type DeletePostFulfilledAction,
+   type DeletePostIdleAction,
+   type DeletePostPendingAction,
+   type DeletePostRejectedAction,
+   type EditPostFulfilledAction,
+   type EditPostIdleAction,
+   type EditPostPendingAction,
+   type EditPostRejectedAction,
+   type FetchPostFulfilledAction,
+   type FetchPostPendingAction,
+   type FetchPostRejectedAction,
+   type FetchPostResetAction,
+   type FetchPostsFulfilledAction,
+   type FetchPostsPendingAction,
+   type FetchPostsRejectedAction,
+   POST_ADD_FULFILLED,
+   POST_ADD_IDLE,
+   POST_ADD_PENDING,
+   POST_ADD_REJECTED,
+   POST_DELETE_FULFILLED,
+   POST_DELETE_IDLE,
+   POST_DELETE_PENDING,
+   POST_DELETE_REJECTED,
+   POST_EDIT_FULFILLED,
+   POST_EDIT_IDLE,
+   POST_EDIT_PENDING,
+   POST_EDIT_REJECTED,
+   POST_FETCH_FULFILLED,
+   POST_FETCH_PENDING,
+   POST_FETCH_REJECTED,
+   POST_FETCH_RESET,
+   POSTS_FETCH_FULFILLED,
+   POSTS_FETCH_PENDING,
+   POSTS_FETCH_REJECTED,
+   REACTION_ADDED,
+   REACTION_REMOVED,
+   REMOVE_REACTION_PENDING,
+   type RemovePostReactionAction,
+   type RemovePostReactionPendingAction
+} from "./constants/actions";
 import { createSelector } from "reselect";
 import { getErrorMessage } from "../../utils/errorUtils/errorUtils";
 
@@ -52,13 +99,13 @@ interface PostsError {
 }
 
 
-interface PostEntity {
+interface PostsEntities {
    [id: string]: Post;
 }
 
 interface PostsState {
    ids: string[];
-   entities: PostEntity;
+   entities: PostsEntities;
    status: PostsStatus;
    error: PostsError;
 }
@@ -67,7 +114,7 @@ interface PostsState {
 
 
 
-const postsAdapter = createEntityAdapter()
+// const postsAdapter = createEntityAdapter()
 
 
 
@@ -102,9 +149,21 @@ type PostsAction =
    | FetchPostPendingAction
    | FetchPostFulfilledAction
    | FetchPostRejectedAction
+   | FetchPostResetAction
+   | AddPostIdleAction
    | AddPostPendingAction
    | AddPostFulfilledAction
    | AddPostRejectedAction
+   | EditPostIdleAction
+   | EditPostPendingAction
+   | EditPostFulfilledAction
+   | EditPostRejectedAction
+   | DeletePostIdleAction
+   | DeletePostPendingAction
+   | DeletePostFulfilledAction
+   | DeletePostRejectedAction
+   | AddPostReactionAction
+   | RemovePostReactionAction
 ;
 
 const postsReducer = createReducer<PostsState, PostsAction>(initialState, {
@@ -115,7 +174,7 @@ const postsReducer = createReducer<PostsState, PostsAction>(initialState, {
       const byId = action.payload.reduce((byId, post) => {
          byId[post.id] = post;
          return byId;
-      }, {} as PostEntity)
+      }, {} as PostsEntities)
       state.entities = byId;
       state.ids = Object.keys(byId);
       state.error.fetchPosts = null;
@@ -151,6 +210,16 @@ const postsReducer = createReducer<PostsState, PostsAction>(initialState, {
       let errorMessage = getErrorMessage(error, 'Failed to Fetch post');
       state.error.fetchPost[postId] = errorMessage;
    },
+   [POST_FETCH_RESET]: (state, action: FetchPostResetAction) => {
+      const postId = action.payload;
+      if (postId) {
+         state.status.fetchPost[postId] = 'idle';
+         state.error.fetchPost[postId] = null;
+      }
+   },
+   [POST_ADD_IDLE]: (state, action: AddPostIdleAction) => {
+      state.status.addPost = 'idle';
+   },
    [POST_ADD_PENDING]: (state, action: AddPostPendingAction) => {
       state.status.addPost = 'pending';
    },
@@ -168,6 +237,61 @@ const postsReducer = createReducer<PostsState, PostsAction>(initialState, {
       let errorMessage = getErrorMessage(error, 'Failed to Add post');
       state.error.addPost = errorMessage;
    },
+   [POST_EDIT_IDLE]: (state, action: EditPostIdleAction) => {
+      state.status.editPost = 'idle';
+   },
+   [POST_EDIT_PENDING]: (state, action: EditPostPendingAction) => {
+      state.status.editPost = 'pending';
+   },
+   [POST_EDIT_FULFILLED]: (state, action: EditPostFulfilledAction) => {
+      const { id, title, content } = action.payload;
+      const existingPost = state.entities[id];
+      existingPost.title = title;
+      existingPost.content = content;
+      state.status.editPost = 'succeed';
+      state.error.editPost = null;
+   },
+   [POST_EDIT_REJECTED]: (state, action: EditPostRejectedAction) => {
+      const error = action.error;
+      state.status.editPost = 'failed';
+
+      let errorMessage = getErrorMessage(error, 'Failed to Edit post');
+      state.error.editPost = errorMessage;
+   },
+   [POST_DELETE_IDLE]: (state, action: DeletePostIdleAction) => {
+      state.status.deletePost = 'idle';
+   },
+   [POST_DELETE_PENDING]: (state, action: DeletePostPendingAction) => {
+      state.status.deletePost = 'pending';
+   },
+   [POST_DELETE_FULFILLED]: (state, action: DeletePostFulfilledAction) => {
+      const postId = action.payload;
+      delete state.entities[postId];
+      state.ids = state.ids.filter(id => id !== postId);
+      state.status.deletePost = 'succeed';
+      state.error.deletePost = null;
+   },
+   [POST_DELETE_REJECTED]: (state, action: DeletePostRejectedAction) => {
+      const error = action.error;
+      state.status.deletePost = 'failed';
+
+      let errorMessage = getErrorMessage(error, 'Failed to Delete post');
+      state.error.deletePost = errorMessage;
+   },
+   [REACTION_ADDED]: (state, action: AddPostReactionAction) => {
+      const { postId, reactionName } = action.payload;
+      const post = state.entities[postId];
+      if (post) {
+         post.reactions[reactionName] += 1;
+      }
+   },
+   [REACTION_REMOVED]: (state, action: RemovePostReactionAction) => {
+      const { postId, reactionName } = action.payload;
+      const post = state.entities[postId];
+      if (post) {
+         post.reactions[reactionName] -= 1;
+      }
+   },
 });
 
 
@@ -180,11 +304,48 @@ export const fetchPostPending = (postId: string): FetchPostPendingAction => ({
    payload: postId,
 });
 
+export const fetchPostReset = (postId: string): FetchPostResetAction => ({
+   type: POST_FETCH_RESET,
+   payload: postId,
+});
+
 export const addPostPending = (post: Post): AddPostPendingAction => ({
    type: POST_ADD_PENDING,
    payload: post,
 });
 
+export const addPostReset = (): AddPostIdleAction => ({
+   type: POST_ADD_IDLE,
+});
+
+export const editPostPending = (post: Post): EditPostPendingAction => ({
+   type: POST_EDIT_PENDING,
+   payload: post,
+});
+
+export const editPostReset = (): EditPostIdleAction => ({
+   type: POST_EDIT_IDLE,
+});
+
+export const deletePostPending = (postId: string): DeletePostPendingAction => ({
+   type: POST_DELETE_PENDING,
+   payload: postId,
+});
+
+export const deletePostReset = (): DeletePostIdleAction => ({
+   type: POST_DELETE_IDLE,
+});
+
+
+export const addPostReactionPending = (postPatch: {postId: string, reactionName: string}): AddPostReactionPendingAction => ({
+   type: ADD_REACTION_PENDING,
+   payload: postPatch,
+})
+
+export const removePostReactionPending = (postPatch: {postId: string, reactionName: string}): RemovePostReactionPendingAction => ({
+   type: REMOVE_REACTION_PENDING,
+   payload: postPatch,
+})
 
 
 // const postsSlice = createSlice({
@@ -265,166 +426,152 @@ export const addPostPending = (post: Post): AddPostPendingAction => ({
 
 
 // Thunks
-export const fetchPosts = createAsyncThunk('fetchPosts', async () => {
-   const response = await getPostsServer();
-   return response.data;
-});
 
-export const fetchPost = createAsyncThunk('fetchPost', async (postId: string) => {
-   const response = await getPostServer(postId);
-   return response.data;
-});
+// export const addPostReaction = ({postId, reactionName}: { postId: string; reactionName: string }): AppThunk => {
+//    return async (dispatch, getState) => {
 
-export const addPost = createAsyncThunk('addPost', async (post: Post) => {
-   const response = await addPostServer(post);
-   return response.data;
-});
-
-export const editPost = createAsyncThunk('editPost', async (post: Post) => {
-   const response = await updatePostServer(post, post.id);
-   return response.data;
-});
-
-export const deletePost = createAsyncThunk('deletePost', async (postId: string) => {
-   await deletePostServer(postId);
-   return postId;
-});
+//       const post = selectPostById(getState(), postId);
+//       if (!isFinite(post.reactions[reactionName])) return;
+//       const prevPostReactionTotal = post.reactions[reactionName];
 
 
-export const addPostReaction = ({postId, reactionName}: { postId: string; reactionName: string }): AppThunk => {
-   return async (dispatch, getState) => {
-
-      const post = selectPostById(getState(), postId);
-      if (!isFinite(post.reactions[reactionName])) return;
-      const prevPostReactionTotal = post.reactions[reactionName];
+//       dispatch(
+//          postReactionAdded({ postId: postId, reactionName })
+//       )
 
 
-      dispatch(
-         addReaction({ postId: postId, reactionName })
-      )
+//       try {
+//          await updatePostReactionServer(
+//             {
+//                id: postId,
+//                reactions: {
+//                   ...post.reactions,
+//                   [reactionName]: prevPostReactionTotal + 1,
+//                }
+//             },
+//             postId
+//          )
+//       } catch (error) {
+//          dispatch(
+//             postReactionRemoved({ postId: postId, reactionName })
+//          );
+//          throw(error);  // the error is 're-throwed' to 'UI', and it is handled there...
+//       }
+
+//    }
+// }
 
 
-      try {
-         await updatePostReactionServer(
-            {
-               id: postId,
-               reactions: {
-                  ...post.reactions,
-                  [reactionName]: prevPostReactionTotal + 1,
-               }
-            },
-            postId
-         )
-      } catch (error) {
-         dispatch(
-            removeReaction({ postId: postId, reactionName })
-         );
-         throw(error);  // the error is 're-throwed' to 'UI', and it is handled there...
-      }
+// export const removePostReaction = ({postId, reactionName}: { postId: string; reactionName: string }): AppThunk => {
+//    return async (dispatch, getState) => {
 
-   }
-}
+//       const post = selectPostById(getState(), postId);
+//       if (!isFinite(post.reactions[reactionName])) return;
+//       const prevPostReactionTotal = post.reactions[reactionName];
+//       if (prevPostReactionTotal <= 0) return;   // We dont want 'negative' reaction-value!
 
 
-export const removePostReaction = ({postId, reactionName}: { postId: string; reactionName: string }): AppThunk => {
-   return async (dispatch, getState) => {
-
-      const post = selectPostById(getState(), postId);
-      if (!isFinite(post.reactions[reactionName])) return;
-      const prevPostReactionTotal = post.reactions[reactionName];
-      if (prevPostReactionTotal <= 0) return;   // We dont want 'negative' reaction-value!
+//       dispatch(
+//          postReactionRemoved({ postId: postId, reactionName })
+//       )
 
 
-      dispatch(
-         removeReaction({ postId: postId, reactionName })
-      )
+//       try {
+//          await updatePostReactionServer(
+//             {
+//                id: postId,
+//                reactions: {
+//                   ...post.reactions,
+//                   [reactionName]: prevPostReactionTotal - 1,
+//                }
+//             },
+//             postId
+//          )
+//       } catch (error) {
+//          dispatch(
+//             postReactionAdded({ postId: postId, reactionName })
+//          );
+//          throw(error);  // the error is 're-throwed' to 'UI', and it is handled there...
+//       }
 
-
-      try {
-         await updatePostReactionServer(
-            {
-               id: postId,
-               reactions: {
-                  ...post.reactions,
-                  [reactionName]: prevPostReactionTotal - 1,
-               }
-            },
-            postId
-         )
-      } catch (error) {
-         dispatch(
-            addReaction({ postId: postId, reactionName })
-         );
-         throw(error);  // the error is 're-throwed' to 'UI', and it is handled there...
-      }
-
-   }
-}
+//    }
+// }
 
 
 // Listeners
-export const addReactionListener = (startAppListening: AppStartListening) => {
+// export const addReactionListener = (startAppListening: AppStartListening) => {
 
-   startAppListening(
-      {
-         actionCreator: addUserReactionFulfilled,
-         effect: (action, { dispatch }) => {
-            const { userId, postId, reactionName } = action.payload;
-            dispatch(
-               addPostReaction({
-                  postId,
-                  reactionName,
-               })
-            )
-         }
-      }
-   )
-}
+//    startAppListening(
+//       {
+//          actionCreator: addUserReactionFulfilled,
+//          effect: (action, { dispatch }) => {
+//             const { userId, postId, reactionName } = action.payload;
+//             dispatch(
+//                addPostReaction({
+//                   postId,
+//                   reactionName,
+//                })
+//             )
+//          }
+//       }
+//    )
+// }
 
-export const removeReactionListener = (startAppListening: AppStartListening) => {
+// export const removeReactionListener = (startAppListening: AppStartListening) => {
 
-   startAppListening(
-      {
-         actionCreator: removeUserReactionFulfilled,
-         effect: (action, { dispatch }) => {
-            const { userId, postId, reactionName } = action.payload;
-            dispatch(
-               removePostReaction({
-                  postId,
-                  reactionName,
-               })
-            )
-         }
-      }
-   )
-}
+//    startAppListening(
+//       {
+//          actionCreator: removeUserReactionFulfilled,
+//          effect: (action, { dispatch }) => {
+//             const { userId, postId, reactionName } = action.payload;
+//             dispatch(
+//                removePostReaction({
+//                   postId,
+//                   reactionName,
+//                })
+//             )
+//          }
+//       }
+//    )
+// }
 
 
 // Selectors
 export const selectPostsEntities = (state: RootState) => state.posts.entities;
 export const selectPostsIds = (state: RootState) => state.posts.ids;
-export const selectAllPosts = (state: RootState) => {
-   return Object.values(state.posts.entities);
-};
+export const selectAllPosts = createSelector(
+   (state: RootState) => state.posts.entities,
+   (postsEntities) => Object.values(postsEntities ?? {})
+)
 
 export const selectPostById = createSelector(  // args: state, postId
    selectPostsEntities,
    (state: RootState, postId: string) => postId,
-   (postsEntities, postId) => postsEntities[postId]
-);
-
-export const selectUserPosts = createSelector(  // args: state, userId
-   (state: RootState) => Object.values(state.posts.entities),
-   (state: RootState, userId: string) => userId,
-   (posts, userId) => {
-      return posts.filter(post => post.userId === userId)
+   (postsEntities, postId) => {
+      const post = postsEntities[postId];
+      if (!post) {
+         return undefined;
+      }
+      return post;
    }
 );
 
-export const selectUserPostsIds = (state: RootState, userId: string) => {  // args: state, userId
-   const userPosts = selectUserPosts(state, userId);
-   return userPosts.map(post => post.id)
-};
+export const selectUserPosts = createSelector(  // args: state, userId
+   selectAllPosts,
+   (state: RootState, userId: string) => userId,
+   (posts, userId) => {
+      return posts.filter(post => post?.userId === userId)
+   }
+);
+
+export const selectUserPostsIds = createSelector(  // args: state, userId
+   selectAllPosts,
+   (state: RootState, userId: string) => userId,
+   (posts, userId) => posts
+      .filter(post => post?.userId === userId)
+      .map(post => post.id)
+)
+
 
 
 

@@ -3,7 +3,7 @@ import { useFormik } from "formik";
 import { addPostSchema } from "../validations/addPostValidation";
 import { Box, Button, useTheme } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { addPost, addPostPending, selectPostsError, selectPostsStatus } from "../features/posts/postsSlice";
+import { addPostPending, addPostReset, selectPostsError, selectPostsStatus } from "../features/posts/postsSlice";
 import { useNavigate } from "react-router-dom";
 import { selectAuthUsername } from "../features/auth/authSlice";
 import { useEffect } from "react";
@@ -50,18 +50,22 @@ const AddPost = () => {
 
    const canSubmit = (!isPendingAddPost);  // emptiness of inputs are handled by 'formik + yup'
 
+   const isValidFormikValues = formik?.values?.title && formik?.values?.content;
 
    useEffect(() => {
       if (isSuccessAddPost) {
-         toast.success("The post is added successfully!");
+         toast.success("Added successfully!");
          navigate(`/users/${authUsername}`);
+         dispatch(
+            addPostReset()
+         )
       }
       if (isErrorAddPost) {
          console.error(addPostError);
          const errorMessage = getErrorMessage(addPostError, 'Failed to add post');
          toast.error(errorMessage);
       }
-   }, [isSuccessAddPost, isErrorAddPost, addPostError, navigate, authUsername])
+   }, [isSuccessAddPost, isErrorAddPost, addPostError, navigate, authUsername, isValidFormikValues, dispatch])
 
 
    const handleSubmitPost = async (formikValues: { title: string; content: string }) => {

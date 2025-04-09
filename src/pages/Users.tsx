@@ -1,14 +1,15 @@
 import { useEffect } from "react";
-import { Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import UserSkeleton from "../components/loading/skeleton/UserSkeleton";
 import UserExcerpt from "../components/user/UserExcerpt";
-import { fetchUsers, selectAllUsers, selectUsersStatus } from "../features/users/usersSlice";
+import { fetchUsers, selectAllUsers, selectUsersError, selectUsersStatus } from "../features/users/usersSlice";
 import MainPageLayout from "../layouts/MainPageLayout";
 import Grid from "@mui/material/Grid2";
 import { randomNum } from "../utils/random/randomNum";
 import { blue, deepOrange, green, pink, yellow } from "@mui/material/colors";
 import { coloredAvatars, selectIsColoredAvatars } from "../features/settings/settingsSlice";
+import ErrorMsg from "../components/common/error/ErrorMsg";
 
 
 
@@ -32,12 +33,21 @@ const Users = () => {
    const isColoredAvatars = useAppSelector(selectIsColoredAvatars);
    const users = useAppSelector(selectAllUsers) ?? [];
    const { fetchUsers: usersFetchStatus } = useAppSelector(selectUsersStatus);
+   const { fetchUsers: usersFetchError } = useAppSelector(selectUsersError);
    
    const isIdleFetchUsers = usersFetchStatus === 'idle';
-   const isSuccessFetchUsers = usersFetchStatus === 'succeed';
-   const isValidUsersData = isSuccessFetchUsers && Array.isArray(users) && users.length > 0;
    const isPendingFetchingUsers = usersFetchStatus === 'pending';
+   const isSuccessFetchUsers = usersFetchStatus === 'succeed';
+   const isFailedFetchUsers = usersFetchStatus === 'failed';
+   const isValidUsersData = isSuccessFetchUsers && Array.isArray(users) && users.length > 0;
 
+
+   const refetchUsers = () => {
+      if (isPendingFetchingUsers) return;
+      dispatch(
+         fetchUsers()
+      )
+   }
 
    // fetch users
    useEffect(() => {
@@ -95,6 +105,21 @@ const Users = () => {
                ))
             }
          </Grid>
+      )
+   } else if (isFailedFetchUsers) {
+      usersContent = (
+         <Stack direction="column" spacing={1} >
+            <Box >
+               <ErrorMsg text={usersFetchError ?? 'Failed to Fetch Users - Unknown Error'} />
+            </Box>
+            <Button
+               variant="contained"
+               onClick={refetchUsers}
+               sx={{ width: 'fit-content', bgcolor: 'secondary.dark', borderRadius: '100vw' }}
+            >
+               Try Again
+            </Button>
+         </Stack>
       )
    } else {
       usersContent = (

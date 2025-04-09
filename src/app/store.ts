@@ -4,10 +4,13 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 import rootReducer from "./reducers";
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from "./rootSaga";
+import { createEpicMiddleware } from "redux-observable";
+import { rootEpic } from "./rootEpic";
 
 // Middlewares
 const sagaMiddleware = createSagaMiddleware();
-const middleware = [thunk, sagaMiddleware];
+const epicMiddleware = createEpicMiddleware();
+const middleware = [thunk, sagaMiddleware, epicMiddleware];
 
 if (process.env.NODE_ENV === 'development') {
 
@@ -34,6 +37,7 @@ const store = createStore(
 
 
 sagaMiddleware.run(rootSaga);
+epicMiddleware.run(rootEpic);
 
 export default store;
 

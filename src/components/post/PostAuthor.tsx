@@ -33,7 +33,7 @@ const PostAuthor = ({ userId }: PostAuthorProps) => {
    const isErrorFetchUser = userFetchStatus === 'failed';
 
    useEffect(() => {
-      if (!isIdleFetchUser || userId == null || isPendingFetchPosts) return;
+      if (!isIdleFetchUser || userId == null || isPendingFetchPosts || (user )) return;
       let ignore = false;
 
       const fetchUserInEffect = async () => {
@@ -43,7 +43,7 @@ const PostAuthor = ({ userId }: PostAuthorProps) => {
          try {
             await dispatch(
                fetchUser(userId)
-            ).unwrap()
+            )
             setUserFetchStatus('succeed');
             setUserFetchError(null);
          } catch (error) {
@@ -74,7 +74,7 @@ const PostAuthor = ({ userId }: PostAuthorProps) => {
       return () => {
          ignore = true;
       }
-   }, [dispatch, userId, isIdleFetchUser, isPendingFetchPosts])
+   }, [dispatch, userId, isIdleFetchUser, isPendingFetchPosts, user])
 
 
    let userContent;
@@ -82,11 +82,11 @@ const PostAuthor = ({ userId }: PostAuthorProps) => {
       userContent = (
          <Skeleton variant="rounded" sx={{ display: 'inline-block' }} />
       )
-   } else if (isSuccessFetchUser) {
+   } else if (isSuccessFetchUser || user) {
       userContent = (
          <Typography>
             {
-               user?.name
+               user?.name ?? "Unknwonw Author"
             }
          </Typography>
       )

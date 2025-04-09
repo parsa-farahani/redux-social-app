@@ -2,7 +2,7 @@
 
 ## Technologies Used:
   - React (+ React-Router-DOM)
-  - Redux (+ Redux-Saga, Immer)
+  - Redux (+ Redux-Saga, Redux-Thunk, Immer)
   - TypeScript
   - Material UI 
 
@@ -43,7 +43,7 @@ react-icons
 
 
 - Toast
-react-toastify
+react-toastify (+ MUI Snakbar)
 
 - Error-Boundary
 react-error-boundary

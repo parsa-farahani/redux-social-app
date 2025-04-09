@@ -1,5 +1,5 @@
 
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { type UserReactions, type User } from "../features/users/usersSlice";
 
 const SERVER_URL = 'http://localhost:9393';
@@ -9,14 +9,14 @@ const SERVER_URL = 'http://localhost:9393';
 // @route 'http://localhost:9393/users'
 export const getUsersServer = async () => {
    const url = `${SERVER_URL}/users`;
-   return axios.get(url);
+   return axios.get<User[]>(url);
 };
 
 // @desc 'GET' user by userId
 // @route 'http://localhost:9393/users/:userId'
 export const getUserServer = async (userId: string) => {
    const url = `${SERVER_URL}/users/${userId}`;
-   return axios.get(url);
+   return axios.get<User>(url);
 };
 
 // @desc 'POST' New User

@@ -1,6 +1,6 @@
 import { createListenerMiddleware, addListener } from '@reduxjs/toolkit';
 import type { RootState, AppDispatch } from './store.ts'
-import { addReactionListener, removeReactionListener } from '../features/posts/postsSlice.js';
+// import { addReactionListener, removeReactionListener } from '../features/posts/postsSlice.js';
 
 export const listenerMiddleware = createListenerMiddleware();
 
@@ -15,5 +15,5 @@ export type AppAddListener = typeof addAppListener;
 
 
 // Listeners
-addReactionListener( startAppListening );
-removeReactionListener( startAppListening );
+// addReactionListener( startAppListening );
+// removeReactionListener( startAppListening );

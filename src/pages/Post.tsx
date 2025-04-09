@@ -11,10 +11,12 @@ import React from "react";
 import { postReactions } from "../constants/postReactions";
 import MainPageLayout from "../layouts/MainPageLayout";
 import {
-   deletePost,
-   editPost,
-   fetchPost,
+   deletePostPending,
+   deletePostReset,
+   editPostPending,
+   editPostReset,
    fetchPostPending,
+   fetchPostReset,
    selectPostById,
    selectPostsError,
    selectPostsStatus,
@@ -39,6 +41,7 @@ import PostAuthorBar from "../components/pages/Post/PostAuthorBar";
 import { EditPostContentTextField, EditPostTitleTextField } from "./Post.styles";
 import PostDeletionModal from "../components/pages/Post/PostDeletionModal";
 import PostActions from "../components/pages/Post/PostActions";
+import { getErrorMessage } from "../utils/errorUtils/errorUtils";
 
 
 
@@ -92,9 +95,10 @@ const Post = () => {
    const authUsername = useAppSelector(selectAuthUsername);
    const authUserReaction =
       useAppSelector((state) =>
-         selectUserReactionByPostId(state, authUsername, postId),
+         selectUserReactionByPostId(state, authUsername!, postId!),
       ) ?? null;
 
+   
    const isAuth = Boolean(authUsername) && authUsername != null;
    const isAuthUserPost = isAuth && authUsername === post?.userId;
 
@@ -110,6 +114,16 @@ const Post = () => {
    const isSuccessDeletePost = postDeleteStatus === "succeed";
    const isPendingDeletePost = postDeleteStatus === "pending";
    const isFailedDeletePost = postDeleteStatus === "failed";
+
+
+
+   const toggleEditMode = useCallback((newIsEditMode?: boolean) => {
+      if (newIsEditMode != null) {
+         setIsEditMode(newIsEditMode);
+      } else {
+         setIsEditMode((ie) => !ie);
+      }
+   }, []);
 
 
 
@@ -205,89 +219,71 @@ const Post = () => {
       },
    });
 
-   const handleSubmitEditPost = async (formikValues: {
+
+   useEffect(() => {
+      if (isSuccessEditPost) {
+         toast.success("Saved successfully!");
+         toggleEditMode();
+         dispatch(
+            editPostReset()
+         )
+      }
+      if (isFailedEditPost) {
+
+         let errorMessage = getErrorMessage(postEditError, "Failed to edit post");
+         toast.error(errorMessage);
+      }
+   }, [navigate, isSuccessEditPost, isFailedEditPost, postEditError, dispatch, toggleEditMode])
+
+   const handleSubmitEditPost = (formikValues: {
       title: string;
       content: string;
    }) => {
-      try {
-         await dispatch(
-            editPost({
-               id: postId!,
-               title: formikValues.title,
-               content: formikValues.content,
-               userId: post.userId,
-               reactions: {
-                  ...post.reactions,
-               },
-               date: post.date,
-            }),
-         ).unwrap();
+      if (!post) return;
 
-         toast.success("Saved successfully!");
-
-         toggleEditMode();
-      } catch (error) {
-         console.error(error);
-
-         let errorMessage = "Failed to edit post";
-         if (error instanceof Error) {
-            errorMessage = error.message;
-         } else if (
-            typeof error === "object" &&
-            error !== null &&
-            "message" in error
-         ) {
-            errorMessage = String(error.message);
-         } else if (typeof error === "string") {
-            errorMessage = error;
-         }
-         toast.error(errorMessage);
-      }
+      dispatch(
+         editPostPending({
+            id: postId!,
+            title: formikValues.title,
+            content: formikValues.content,
+            userId: post.userId,
+            reactions: {
+               ...post.reactions,
+            },
+            date: post.date,
+         }),
+      );
    };
-
-   const toggleEditMode = useCallback((newIsEditMode?: boolean) => {
-      if (newIsEditMode != null) {
-         setIsEditMode(newIsEditMode);
-      } else {
-         setIsEditMode((ie) => !ie);
-      }
-   }, []);
 
 
    const handleCancelEditPost = useCallback(() => {
-      formik.values.title = post.title;
-      formik.values.content = post.content;
+      formik.values.title = post?.title ?? "";
+      formik.values.content = post?.content ?? "";
       toggleEditMode();
       handleCloseOptionsMenu();
    }, [formik?.values, post?.title, post?.content, toggleEditMode, handleCloseOptionsMenu]);
 
 
-
-   // delete
-   const handleSubmitDeletePost = async () => {
-      try {
-         await dispatch(deletePost(postId!)).unwrap();
-
+   useEffect(() => {
+      if (isSuccessDeletePost) {
          toast.success("Deleted successfully!");
-
          navigate(`/posts`);
-      } catch (error) {
-         console.error(error);
+         dispatch(
+            deletePostReset()
+         )
+      }
+      if (isFailedDeletePost) {
 
-         let errorMessage = "Failed to add post";
-         if (error instanceof Error) {
-            errorMessage = error.message;
-         } else if (
-            typeof error === "object" &&
-            error !== null &&
-            "message" in error
-         ) {
-            errorMessage = String(error.message);
-         } else if (typeof error === "string") {
-            errorMessage = error;
-         }
+         let errorMessage = getErrorMessage(postDeleteError, "Failed to delete post");
          toast.error(errorMessage);
       }
+   }, [navigate, isSuccessDeletePost, isFailedDeletePost, postDeleteError, dispatch])
+
+   // delete
+   const handleSubmitDeletePost = () => {
+      dispatch(
+         deletePostPending(postId!)
+      );
    };
 
    const handleOpenDeletionModal = useCallback(() => {
@@ -304,11 +300,13 @@ const Post = () => {
       );
    }
 
+   
    useEffect(() => {
-      if (postFetchStatus) return;
+      if (postFetchStatus && postFetchStatus !== 'idle') return;
       let ignore = false;
 
       const fetchPostInEffect = async () => {
+
          try {
             await dispatch(
                fetchPostPending(postId!)
@@ -341,6 +339,16 @@ const Post = () => {
          ignore = true;
       };
    }, [dispatch, postId, postFetchStatus]);
+
+
+   useEffect(() => {
+
+      return () => {
+         dispatch(
+            fetchPostReset(postId!)
+         )
+      }
+   }, [dispatch, postId])
 
    
    // Disabling the 'editMode' when we leave this page
@@ -497,7 +505,7 @@ const Post = () => {
          </Stack>
       );
    } else {
-      postsContent = <ErrorMsg text="404 - Not Fount the Post!" />;
+      postsContent = <ErrorMsg text="404 - Not Found the Post!" />;
    }
 
    return (

@@ -32,17 +32,6 @@
         "like": 6,
         "dislike": 1
       }
-    },
-    {
-      "id": "nwRQHpfrRhYYKHwxoHp2l",
-      "title": "ZXZ",
-      "content": "zZZZZZZZZZZZZZZZZZZZZZ",
-      "userId": "1",
-      "date": "2025-04-08T10:30:29.510Z",
-      "reactions": {
-        "like": 0,
-        "dislike": 0
-      }
     }
   ],
   "users": [
@@ -50,7 +39,7 @@
       "id": "1",
       "name": "User 1",
       "reactions": {
-        "1": "like",
+        "1": "dislike",
         "2": "like",
         "3": "like",
         "HNlQ3dCTIQkyDhZONsKEO": "like",

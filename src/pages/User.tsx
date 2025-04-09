@@ -4,7 +4,6 @@ import Grid from "@mui/material/Grid2";
 import PostExcerpt from "../components/post/PostExcerpt";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
-   fetchPosts,
    fetchPostsPending,
    selectPostsError,
    selectPostsStatus,
@@ -14,8 +13,11 @@ import {
 import React, { useEffect, useState } from "react";
 import {
    fetchUser,
+   fetchUserReset,
    selectUserById,
    selectUserReactions,
+   selectUsersError,
+   selectUsersStatus,
 } from "../features/users/usersSlice";
 import { selectAuthUsername } from "../features/auth/authSlice";
 import PostSkeleton from "../components/loading/skeleton/PostSkeleton";
@@ -25,13 +27,13 @@ import { FaUserLarge } from "react-icons/fa6";
 import { pink, red } from "@mui/material/colors";
 import UserInfoSkeleton from "../components/pages/User/UserInfoSkeleton";
 import UserInfo from "../components/pages/User/UserInfo";
+import { FETCH_USER_PENDING } from "../features/users/constants/actions";
+import { getErrorMessage } from "../utils/errorUtils/errorUtils";
 
 const MemoizedPostExcerpt = React.memo(PostExcerpt);
 
 
 const User = () => {
-   // states
-   const [userFetchStatus, setUserFetchStatus] = useState<'idle' | 'pending' | 'failed' | 'succeed'>("idle");
 
    // rrd
    const { userId } = useParams();
@@ -45,15 +47,27 @@ const User = () => {
    const authUserReactions = useAppSelector((state) =>
       selectUserReactions(state, authUsername!),
    );
+   
+   const { fetchUser: fetchUserStatus } = useAppSelector(selectUsersStatus);
+   const userFetchStatus = fetchUserStatus[userId!];
+   
+   const { fetchUser: fetchUserError } = useAppSelector(selectUsersError);
+   const userFetchError = fetchUserError[userId!];
+   
    const { fetchPosts: postsFetchStatus } = useAppSelector(selectPostsStatus);
    const { fetchPosts: postsFetchError } = useAppSelector(selectPostsError);
 
    const user = useAppSelector((state) => selectUserById(state, userId!));
-   const isIdleFetchUser = userFetchStatus === "idle";
-
+   
    const isAuth = Boolean(authUsername);
    const userPostsTotal = userPostsIds?.length ?? 0;
+   
 
+   const isPendingFetchUser = userFetchStatus === 'pending';
+   const isSuccessFetchUser = userFetchStatus === 'succeed';
+   const isFailedFetchUser = userFetchStatus === 'failed';
+
+   
    // For now i fetch all posts for the user, because i dont have a backend to request user-posts, but it should be fixed when we have a backend to handle it (it is a bug now)
    useEffect(() => {
       if (postsFetchStatus !== "idle") return;
@@ -71,19 +85,13 @@ const User = () => {
 
    // Fetching user-data
    useEffect(() => {
-      if (!isIdleFetchUser) return;
+      if (userFetchStatus && userFetchStatus !== 'idle') return;
       let ignore = false;
 
       const fetchUserInEffect = async () => {
-         setUserFetchStatus("pending");
-         try {
-            await dispatch(
-               fetchUser(userId!)
-            ).unwrap();
-            setUserFetchStatus("succeed");
-         } catch (error) {
-            setUserFetchStatus("failed");
-         }
+         dispatch(
+            fetchUser(userId!)
+         )
       };
 
       if (!ignore) {
@@ -93,23 +101,33 @@ const User = () => {
       return () => {
          ignore = true;
       };
-   }, [dispatch, isIdleFetchUser, userId]);
+   }, [dispatch, userFetchStatus, userId]);
 
+
+   // I reset the 'state.user.sattus.fetchPost[userId]' to 'idle', for the next fetches (each time user comes in this page)
+   useEffect(() => {
+
+      return () => {
+         dispatch(
+            fetchUserReset(userId!)
+         )
+      }
+   }, [dispatch, userId])
 
 
    // + User content
    let userContent;
-   if (userFetchStatus === 'pending') {
+   if (isPendingFetchUser) {
       userContent = (
          <UserInfoSkeleton />
       )
-   } else if (userFetchStatus === 'succeed') {
+   } else if (isSuccessFetchUser) {
       userContent = (
-         <UserInfo user={user} userPostsTotal={userPostsTotal} />
+         <UserInfo user={user!} userPostsTotal={userPostsTotal} />
       )
-   } else if (userFetchStatus === 'failed') {
+   } else if (isFailedFetchUser) {
       userContent = (
-         <ErrorMsg text="Failed to load the user." />
+         <ErrorMsg text={getErrorMessage(postsFetchError) ?? "Failed to load the user."} />
       )
    } else {
       userContent = (
