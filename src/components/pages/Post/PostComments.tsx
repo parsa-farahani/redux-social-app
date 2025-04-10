@@ -3,13 +3,14 @@ import PostComment from "../../comment/PostComment";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { useFormik } from "formik";
 import { selectAuthUsername } from "../../../features/auth/authSlice";
-import { addComment, fetchComments, selectAllComments, selectCommentsError, selectCommentsStatus, selectPostCommentsByPostId } from "../../../features/comments/commentsSlice";
+import { addComment, addCommentReset, fetchComments, selectAllComments, selectCommentsError, selectCommentsStatus, selectPostCommentsByPostId } from "../../../features/comments/commentsSlice";
 import { useEffect } from "react";
 import { addCommentSchema } from "../../../validations/addCommentValidation";
 import { nanoid } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 import Spinner from "../../loading/spinner/Spinner";
 import ErrorMsg from "../../common/error/ErrorMsg";
+import { getErrorMessage } from "../../../utils/errorUtils/errorUtils";
 
 
 
@@ -43,15 +44,30 @@ const PostComments = ( { postId }: PostCommentsProps ) => {
    const isAuth = (authUsername != null) && (authUsername !== "");
 
 
+   const isIdleFetchComments = commentsFetchStatus === 'idle';
    const isPendingFetchComments = commentsFetchStatus === 'pending';
    const isSuccessFetchComments = commentsFetchStatus === 'succeed';
    const isErrorFetchComments = commentsFetchStatus === 'failed';
 
    const isPendingAddComment = commentsAddStatus === 'pending';
    const isSuccessAddComment = commentsAddStatus === 'succeed';
-   const isErrorAddComment = commentsAddStatus === 'failed';
+   const isFailedAddComment = commentsAddStatus === 'failed';
 
 
+
+   useEffect(() => {
+      if (isSuccessAddComment) {
+         formik.values.content = "";
+         toast.success('The comment is submitted Successfully!');
+         dispatch(
+            addCommentReset()
+         )
+      }
+
+      if (isFailedAddComment) {
+         toast.error(commentsAddError);
+      }
+   }, [isSuccessAddComment, isFailedAddComment, dispatch, formik.values, commentsAddError])
 
    const handleSubmitComment = async (formikValues: { content: string }) => {
       
@@ -59,45 +75,24 @@ const PostComments = ( { postId }: PostCommentsProps ) => {
          toast.info('Please login to submit your comment');
          return;
       }
-      console.log('submit comment: ' + formikValues.content);
       
-      try {
-         await dispatch(
-            addComment(
-               {
-                  id: nanoid(),
-                  content: formikValues.content,
-                  postId,
-                  userId: authUsername!,
-                  date: new Date().toISOString(),
-               }
-            )
-         ).unwrap();
-         formik.values.content = "";
-         toast.success('The comment is submitted Successfully!');
-      } catch (error) {
-         console.error(error);
-
-         let errorMessage = "Failed to add comment";
-         if (error instanceof Error) {
-            errorMessage = error.message;
-         } else if (
-            typeof error === "object" &&
-            error !== null &&
-            "message" in error
-         ) {
-            errorMessage = String(error.message);
-         } else if (typeof error === "string") {
-            errorMessage = error;
-         }
-         toast.error(errorMessage);
-      }
+      dispatch(
+         addComment(
+            {
+               id: nanoid(),
+               content: formikValues.content,
+               postId,
+               userId: authUsername!,
+               date: new Date().toISOString(),
+            }
+         )
+      );
    };
 
 
    // because we dont have any backend now, I have to fetch all of comments here
    useEffect(() => {
-      if (commentsFetchStatus !== 'idle') return;
+      if (!isIdleFetchComments) return;
       let ignore = false;
 
       if (!ignore) {
@@ -109,7 +104,7 @@ const PostComments = ( { postId }: PostCommentsProps ) => {
       return () => {
          ignore = true;
       }
-   }, [dispatch, commentsFetchStatus])
+   }, [dispatch, isIdleFetchComments])
 
 
    let commentsContent;

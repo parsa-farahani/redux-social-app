@@ -11,6 +11,7 @@ export const FETCH_USER_REJECTED = 'users/FETCH_USER_REJECTED';
 export const FETCH_USER_RESET = 'users/FETCH_USER_RESET';
 
 export const ADD_USER_REACTION_FULFILLED = 'users/ADD_USER_REACTION_FULFILLED';
+export const REMOVE_USER_REACTION_FULFILLED = 'users/REMOVE_USER_REACTION_FULFILLED';
 export const ADD_REACTION = 'users/ADD_REACTION';
 export const REMOVE_REACTION = 'users/REMOVE_REACTION';
 
@@ -55,6 +56,14 @@ export interface FetchUserResetAction {
 
 export interface AddUserReactionFulfilledAction {
    type: typeof ADD_USER_REACTION_FULFILLED;
+   payload: {
+      reactionName: string;
+      postId: string;
+   };
+}
+
+export interface RemoveUserReactionFulfilledAction {
+   type: typeof REMOVE_USER_REACTION_FULFILLED;
    payload: {
       reactionName: string;
       postId: string;

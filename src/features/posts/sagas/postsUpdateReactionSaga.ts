@@ -1,12 +1,12 @@
 import { call, put, select, takeLatest } from "redux-saga/effects";
-import { ADD_REACTION_PENDING, REACTION_ADDED, REACTION_REMOVED, REMOVE_REACTION_PENDING, type RemovePostReactionAction, type AddPostReactionAction } from "../constants/actions";
+import { ADD_REACTION_PENDING, REACTION_ADDED, REACTION_REMOVED, REMOVE_REACTION_PENDING, type AddPostReactionPendingAction, type RemovePostReactionPendingAction } from "../constants/actions";
 import { type Post, selectPostById } from "../postsSlice";
 import axios from "axios";
 
 
 
 // + add reaction
-function* addPostReaction(action: AddPostReactionAction) {
+function* addPostReaction(action: AddPostReactionPendingAction) {
 
    const { postId, reactionName } = action.payload;
 
@@ -46,7 +46,7 @@ export function* addPostReactionSaga() {
 
 
 // + remove reaction
-function* removePostReaction(action: RemovePostReactionAction) {
+function* removePostReaction(action: RemovePostReactionPendingAction) {
 
    const { postId, reactionName } = action.payload;
 

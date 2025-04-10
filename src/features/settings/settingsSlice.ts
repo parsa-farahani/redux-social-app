@@ -2,7 +2,7 @@ import type { RootState } from "../../app/store";
 import createReducer from "../../app/utils/createReducer";
 
 
-interface SettingsState {
+export interface SettingsState {
    isDarkMode: boolean;
    isColoredAvatars: boolean;
 }

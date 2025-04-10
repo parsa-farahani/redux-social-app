@@ -100,19 +100,19 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
       if (  // If user has changed his/her reaction from like <-> dislike, we should first 'remove' the opposite reaction
          isOppositeReaction   
       ) {
-         // const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
+         const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
 
          try {
 
-            // await dispatch(
-            //    removeUserReaction(
-            //       {
-            //          userId: authUsername,
-            //          postId: postId,
-            //          reactionName: oppositeReactionName,
-            //       }
-            //    )
-            // )
+            await dispatch(
+               removeUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId,
+                     reactionName: oppositeReactionName,
+                  }
+               )
+            )
 
             await dispatch(
                addUserReaction(

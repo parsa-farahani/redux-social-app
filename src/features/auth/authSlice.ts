@@ -4,7 +4,7 @@ import { type RootState } from "../../app/store";
 import createReducer from "../../app/utils/createReducer";
 
 
-interface AuthState {
+export interface AuthState {
    username: string | null;
 }
 
@@ -18,9 +18,19 @@ const initialState: AuthState = {
 const LOGIN = 'auth/LOGIN';
 const LOGOUT = 'auth/LOGOUT';
 
+interface LoginAction {
+   type: typeof LOGIN;
+   payload: string;
+}
 
+interface LogoutAction {
+   type: typeof LOGOUT;
+}
+
+
+type AuthActions = LoginAction |LogoutAction;
 // for now, we dont have any 'backend' to handle auth, so I just mimick the process by client-side states
-const authReducer = createReducer(initialState,
+const authReducer = createReducer<AuthState, AuthActions>(initialState,
    {
       [LOGIN]: (state, action: { type: typeof LOGIN, payload: string }) => {
          state.username = action.payload;

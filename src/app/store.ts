@@ -5,11 +5,11 @@ import rootReducer from "./reducers";
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from "./rootSaga";
 import { createEpicMiddleware } from "redux-observable";
-import { rootEpic } from "./rootEpic";
+import { type ObservedActions, rootEpic, type RootStateForEpic } from "./rootEpic";
 
 // Middlewares
 const sagaMiddleware = createSagaMiddleware();
-const epicMiddleware = createEpicMiddleware();
+const epicMiddleware = createEpicMiddleware<ObservedActions, ObservedActions, RootStateForEpic>();
 const middleware = [thunk, sagaMiddleware, epicMiddleware];
 
 if (process.env.NODE_ENV === 'development') {
@@ -36,8 +36,8 @@ const store = createStore(
 )
 
 
-sagaMiddleware.run(rootSaga);
 epicMiddleware.run(rootEpic);
+sagaMiddleware.run(rootSaga);
 
 export default store;
 
@@ -52,3 +52,9 @@ export type AppThunk<ThunkReturnType = void> = ThunkAction<
    unknown,
    Action
 >;
+
+
+
+store.dispatch({
+   type: 'PING'
+})

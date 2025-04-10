@@ -1,4 +1,3 @@
-import { createAsyncThunk, createEntityAdapter, createSlice, isRejected, type PayloadAction, type EntityState, createSelector, createAction } from "@reduxjs/toolkit";
 import { type AppThunk, type RootState } from "../../app/store";
 import { addUserReactionServer, getUserServer, getUsersServer } from "../../services/usersServices";
 import createReducer from "../../app/utils/createReducer";
@@ -21,9 +20,11 @@ import {
    type FetchUserResetAction,
    type AddUserReactionAction,
    type RemoveUserReactionAction,
-   ADD_USER_REACTION_FULFILLED
+   ADD_USER_REACTION_FULFILLED,
+   REMOVE_USER_REACTION_FULFILLED
 } from "./constants/actions";
 import { getErrorMessage } from "../../utils/errorUtils/errorUtils";
+import { createSelector } from "reselect";
 
 
 export interface UserReactions {
@@ -70,7 +71,7 @@ interface UsersEntities {
    [id: string]: User;
 }
 
-interface UsersState extends EntityState<User, string> {
+export interface UsersState {
    ids: string[];
    entities: UsersEntities;
    status: UsersStatus;
@@ -225,6 +226,14 @@ export const addUserReactionFulfilled = ({ reactionName, postId }: { reactionNam
    },
 });
 
+export const removeUserReactionFulfilled = ({ reactionName, postId }: { reactionName: string; postId: string; }) => ({
+   type: REMOVE_USER_REACTION_FULFILLED,
+   payload: {
+      reactionName,
+      postId,
+   },
+});
+
 export const userReactionAdded = ({ reactionName, userId, postId }: { reactionName: string; postId: string; userId: string }) => ({
    type: ADD_REACTION,
    payload: {
@@ -289,19 +298,6 @@ export const fetchUser = (userId: string): AppThunk => {
 
 
 // + User-Reaction
-// export const addUserReactionFulfilled = createAction<{
-//    userId: string;
-//    postId: string;
-//    reactionName: string;
-// }>('addUserReaction/fulfilled');
-
-// export const removeUserReactionFulfilled = createAction<{
-//    userId: string;
-//    postId: string;
-//    reactionName: string;
-// }>('removeUserReaction/fulfilled');
-
-
 export const addUserReaction = ({ userId, postId, reactionName }: { userId: string; postId: string; reactionName: string }): AppThunk => {
    return async (dispatch, getState) => {
 
@@ -374,9 +370,9 @@ export const removeUserReaction = ({ userId, postId, reactionName }: { userId: s
             id: userId,
             reactions: newUserReactions
          })
-         // dispatch(
-         //    removeUserReactionFulfilled({ userId, postId, reactionName })
-         // )
+         dispatch(
+            removeUserReactionFulfilled({ postId, reactionName })
+         )
       } catch (error) {
          dispatch(
             userReactionAdded(
@@ -394,68 +390,6 @@ export const removeUserReaction = ({ userId, postId, reactionName }: { userId: s
 
 
 
-// const usersSlice = createSlice({
-//    name: 'users',
-//    initialState,
-//    reducers: {
-//       userReactionAdded: (state, action: PayloadAction<{userId: string, postId: string; reactionName: string}>) => {
-//          const { userId, postId, reactionName } = action.payload;
-//          const existingUser = state.entities[userId];
-//          existingUser.reactions[postId] = reactionName;
-//       },
-//       userReactionRemoved: (state, action: PayloadAction<{userId: string, postId: string;}>) => {
-//          const { userId, postId } = action.payload;
-//          const existingUser = state.entities[userId];
-//          delete existingUser.reactions[postId];
-//       },
-//    },
-//    extraReducers: (builder) => {
-//       builder
-//       .addCase(fetchUsers.fulfilled, (state, action) => {
-//          usersAdapter.upsertMany(state, action.payload);
-//          state.status['fetchUsers'] = 'succeed';
-//       })
-//       .addCase(fetchUser.fulfilled, (state, action) => {
-//          usersAdapter.setOne(state, action.payload);
-//       })
-//       .addMatcher(
-//          (action) => {
-//             return (
-//                ['fetchUsers', 'editUser', 'addUser', 'deleteUser'].includes(action.type.slice(0, action.type.indexOf('/'))) &&
-//                action.type.slice(action.type.indexOf('/') + 1) === 'pending'
-//             )
-//          },
-//          (state, action) => {
-//             const op = action.type.slice(0, action.type.indexOf('/'));
-//             state.status[op] = 'pending';
-//          } 
-//       )
-//       .addMatcher(
-//          isRejected(fetchUsers, fetchUser),
-//          (state, action) => {
-//            const op = action.type.split('/')[0];
-//            state.status[op] = 'failed';
-//            state.error[op] = (
-//              action.payload as { message: string } || 
-//              action.error as { message: string } || 
-//              { message: 'Unknown Error' }
-//            ).message;
-//          }
-//       )
-//    }
-// })
-
-
-// Thunks
-// export const fetchUsers = createAsyncThunk('fetchUsers', async () => {
-//    const response = await getUsersServer();
-//    return response.data;
-// });
-
-// export const fetchUser = createAsyncThunk('fetchUser', async (userId: string) => {
-//    const response = await getUserServer(userId);
-//    return response.data;
-// });
 
 
 
@@ -464,7 +398,7 @@ export const selectUsersEntities = (state: RootState) => state.users.entities;
 export const selectUsersIds = (state: RootState) => state.users.ids;
 export const selectAllUsers = createSelector(
    (state: RootState) => state.users.entities,
-   (UsersEntities) => Object.values(UsersEntities ?? {})
+   (usersEntities) => Object.values(usersEntities ?? {})
 );
 
 export const selectUserById = createSelector(  // args: state, postId
@@ -498,30 +432,6 @@ export const selectUserReactionByPostId = createSelector(  // args: state, userI
 
 export const selectUsersStatus = (state: RootState) => state.users.status;
 export const selectUsersError = (state: RootState) => state.users.error;
-
-
-// export const {
-//    selectAll: selectAllUsers,
-//    selectById: selectUserById,
-//    selectIds: selectUsersIds,
-//    selectEntities: selectUsersEntities,
-//    selectTotal: SelectUsersTotal
-// } = usersAdapter.getSelectors((state: RootState) => state.users);
-
-
-
-// export const selectUserReactions = createSelector(  // args: state, userId
-//    (state: RootState, userId: string) => selectUserById(state, userId),
-//    (user) => user?.reactions ?? {}
-// )
-
-// export const selectUserReactionByPostId = createSelector(  // args: state, userId , postId
-//    (state: RootState, userId: string, _) => selectUserReactions(state, userId),
-//    (state: RootState, userId: string, postId: string) => postId,
-//    (reactions, postId) => reactions[postId]
-// );
-
-
 
 
 export default usersReducer;

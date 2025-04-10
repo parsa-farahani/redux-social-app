@@ -8,7 +8,7 @@
       "date": "2020-01-01T10:30:00",
       "reactions": {
         "like": 10,
-        "dislike": 3
+        "dislike": 4
       }
     },
     {
@@ -51,7 +51,6 @@
       "id": "2",
       "name": "User 2",
       "reactions": {
-        "1": "like",
         "2": "like",
         "H-b4kyBnEHs34hBQJ4CJV": "like",
         "UbacA1Ciq1bxLLGpx5gUZ": "like",
@@ -62,7 +61,6 @@
       "id": "3",
       "name": "User 3",
       "reactions": {
-        "1": "dislike",
         "2": "dislike",
         "3": "dislike",
         "HNlQ3dCTIQkyDhZONsKEO": "dislike",
@@ -78,6 +76,55 @@
       "userId": "1",
       "postId": "1",
       "date": "2019-01-01T08:00:00"
+    },
+    {
+      "id": "tfQ3BX8WRivUgR2fPGhmP",
+      "content": "User 2's comment on post 3 😃❤️",
+      "postId": "3",
+      "userId": "2",
+      "date": "2025-04-10T19:10:35.874Z"
+    },
+    {
+      "id": "xN8t95KxDxUs8QWm8Ezyh",
+      "content": "ZZZZZZZZZZZ",
+      "postId": "3",
+      "userId": "1",
+      "date": "2025-04-10T19:26:04.408Z"
+    },
+    {
+      "id": "wDsPMNEWPGpCwnjOEFGKk",
+      "content": "asdasdasd",
+      "postId": "3",
+      "userId": "1",
+      "date": "2025-04-10T19:28:04.529Z"
+    },
+    {
+      "id": "MQTUQPb8FzDiMHVjdvxpa",
+      "content": "asdasdasdasd",
+      "postId": "1",
+      "userId": "1",
+      "date": "2025-04-10T19:28:55.427Z"
+    },
+    {
+      "id": "gb8O8AK_efiin_vbKkBac",
+      "content": "wwwwwwwwwwwwwwwwwwwwwwww",
+      "postId": "1",
+      "userId": "2",
+      "date": "2025-04-10T19:34:56.858Z"
+    },
+    {
+      "id": "XbCiuiP7M7fwFRIA9jq7a",
+      "content": "RRRRRRRRRRRRRRRR",
+      "postId": "1",
+      "userId": "2",
+      "date": "2025-04-10T19:35:06.313Z"
+    },
+    {
+      "id": "WZFRGLA-iBijN-vK5q1ib",
+      "content": "QEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+      "postId": "2",
+      "userId": "2",
+      "date": "2025-04-10T19:35:32.565Z"
     }
   ]
 }
