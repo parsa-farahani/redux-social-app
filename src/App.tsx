@@ -10,7 +10,6 @@ import {
    User,
    AddPost,
    Login,
-   Test,
    NotFound,
 } from "./pages";
 import { useEffect } from "react";
@@ -56,14 +55,6 @@ const App = () => {
                      element={
                         <PageContainer title="Error Test Page">
                            <ErrorTest />
-                        </PageContainer>
-                     }
-                  />
-                  <Route
-                     path="/test"
-                     element={
-                        <PageContainer title="Test Page">
-                           <Test />
                         </PageContainer>
                      }
                   />
