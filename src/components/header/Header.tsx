@@ -37,7 +37,6 @@ import { HeaderNavLink } from "./Header.styles";
 import { FaInbox } from "react-icons/fa";
 import { IoMdMail } from "react-icons/io";
 import { logout, selectAuthUsername } from "../../features/auth/authSlice";
-import { selectUserById } from "../../features/users/usersSlice";
 import { toast } from "react-toastify";
 import { BiError, BiLogIn, BiUser } from "react-icons/bi";
 import HeaderLogoLink from "./HeaderLogoLink";
@@ -62,11 +61,6 @@ const navLinksData = [
       title: "NotFound",
       href: "/not-found",
       icon: <MdDangerous />,
-   },
-   {
-      title: "Test",
-      href: "/test",
-      icon: <BsGear />,
    },
    {
       title: "ErrorTest",
