@@ -1,6 +1,5 @@
-import { createAsyncThunk, createEntityAdapter, createSlice, type PayloadAction, type EntityState, isRejected, createSelector } from "@reduxjs/toolkit";
 import type { AppThunk, RootState } from "../../app/store";
-import { addCommentServer, deleteCommentServer, getCommentsServer, updateCommentServer } from "../../services/commentsServices";
+import { addCommentServer, getCommentsServer } from "../../services/commentsServices";
 import createReducer from "../../app/utils/createReducer";
 import {
    ADD_COMMENT_FULFILLED,
@@ -21,6 +20,7 @@ import {
    type FetchCommentsResetAction
 } from "./constants/actions";
 import { getErrorMessage } from "../../utils/errorUtils/errorUtils";
+import { createSelector } from "reselect";
 
 
 export interface Comment {
@@ -31,10 +31,6 @@ export interface Comment {
    date: string;
 }
 
-
-const commentsAdapter = createEntityAdapter<Comment>({
-   sortComparer: (a, b) => b.date.localeCompare(a.date),
-});
 
 
 type Status = 'idle' | 'pending' | 'succeed' | 'failed';

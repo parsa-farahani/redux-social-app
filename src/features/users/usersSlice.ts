@@ -38,7 +38,6 @@ export interface User {
 }
 
 
-// const usersAdapter = createEntityAdapter<User>();
 
 
 type Status = 'idle' | 'pending' | 'succeed' | 'failed';

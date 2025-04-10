@@ -48,6 +48,7 @@ const AddPost = () => {
    const isErrorAddPost = addPostStatus === 'failed';
    
 
+   const isAuth = authUsername != null;
    const canSubmit = (!isPendingAddPost);  // emptiness of inputs are handled by 'formik + yup'
 
    const isValidFormikValues = formik?.values?.title && formik?.values?.content;
@@ -69,37 +70,21 @@ const AddPost = () => {
 
 
    const handleSubmitPost = async (formikValues: { title: string; content: string }) => {
-      if (authUsername == null) return;
+      if (!isAuth) return;
 
-      try {
-         dispatch(
-            addPostPending({
-               id: nanoid(),
-               title: formikValues.title,
-               content: formikValues.content,
-               userId: authUsername,
-               date: new Date().toISOString(),
-               reactions: {
-                  like: 0,
-                  dislike: 0,
-               }
-            })
-         );
-         // toast.success("The post is added successfully!");
-         // navigate(`/users/${authUsername}`);
-      } catch (error) {
-         console.error(error);
-
-         // let errorMessage = 'Failed to add post';
-         // if (error instanceof Error) {
-         //   errorMessage = error.message;
-         // } else if (typeof error === 'object' && error !== null && 'message' in error) {
-         //   errorMessage = String(error.message);
-         // } else if (typeof error === 'string') {
-         //   errorMessage = error;
-         // }
-         // toast.error(errorMessage);
-      }
+      dispatch(
+         addPostPending({
+            id: nanoid(),
+            title: formikValues.title,
+            content: formikValues.content,
+            userId: authUsername,
+            date: new Date().toISOString(),
+            reactions: {
+               like: 0,
+               dislike: 0,
+            }
+         })
+      );
    }
 
 

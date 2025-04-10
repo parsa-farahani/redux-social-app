@@ -67,8 +67,6 @@ const Post = () => {
    const { postId } = useParams();
 
    // states
-   // const [postFetchStatus, setPostFetchStatus] = useState("idle");
-   // const [postFetchError, setPostFetchError] = useState<string | null>(null);
    const [isEditMode, setIsEditMode] = useState(false);
 
    const [isOpenDeletionModal, setIsOpenDeletionModal] = useState(false);
@@ -76,9 +74,6 @@ const Post = () => {
    // redux
    const dispatch = useAppDispatch();
    const post = useAppSelector((state) => selectPostById(state, postId!));
-   const postAuthor = useAppSelector((state) =>
-      selectUserById(state, post?.userId),
-   );
    const { fetchPost: fetchPostStatus, editPost: postEditStatus, deletePost: postDeleteStatus } =
       useAppSelector(selectPostsStatus);
 
@@ -377,7 +372,7 @@ const Post = () => {
                onSubmit={formik.handleSubmit}
                style={{ display: "hidden" }}
             ></form>
-            <PostAuthorBar user={postAuthor} postDate={post.date} />
+            <PostAuthorBar userId={post?.userId} postDate={post.date} />
             <Box sx={{ minHeight: "60vh", padding: 1, marginBottom: "3rem" }}>
                <Stack direction="row" alignItems="center">
                   {!isEditMode ? (
