@@ -29,7 +29,6 @@ import PostReactionButton from "../components/post/PostReactionButton";
 import {
    addUserReaction,
    removeUserReaction,
-   selectUserById,
    selectUserReactionByPostId,
 } from "../features/users/usersSlice";
 import { selectAuthUsername } from "../features/auth/authSlice";
@@ -122,7 +121,7 @@ const Post = () => {
 
 
 
-   // reaction
+   // + reactions
    const handleRemoveReaction = async (reactionName: string) => {
       if (!isAuth) {
          // If user hasn't logged in yet, we'll send him/her to '/login' page
@@ -131,75 +130,99 @@ const Post = () => {
       }
 
       try {
+   
          await dispatch(
-            removeUserReaction({
-               userId: authUsername,
-               postId: postId!,
-               reactionName,
-            }),
-         );
+            removeUserReaction(
+               {
+                  userId: authUsername,
+                  postId: postId!,
+                  reactionName,
+               }
+            )
+         )
+
       } catch (error) {
          console.error(error);
-      }
-   };
 
-   const handleAddReaction = async (reactionName: string) => {
-      // We can also use 'extraReducers' to handle actions of other slices in a slice to write such logic, but I kept the logic here for now (because I need to control the order of requests), and maybe I move some of these logics to the 'extraReducers' of a slice!
+         let errorMessage = getErrorMessage(error, "Failed to remove reaction");
+         toast.error(errorMessage);
+      }
+   }
+
+   const handleAddReaction = async (reactionName: string) => {  // We can also use 'extraReducers' to handle actions of other slices in a slice to write such logic, but I kept the logic here for now (because I need to control the order of requests), and maybe I move some of these logics to the 'extraReducers' of a slice!
       if (!isAuth) {
          // If user hasn't logged in yet, we'll send him/her to '/login' page
          navigate("/login");
          return;
       }
 
-      if (authUserReaction === reactionName) {
-         // Avoiding reactions more than 'once' (just 1 like/dislike per user)
+
+      if ( authUserReaction === reactionName ) {  // Avoiding reactions more than 'once' (just 1 like/dislike per user)
          handleRemoveReaction(reactionName);
          return;
       }
 
-      const isOppositeReaction =
-         (authUserReaction === "like" && reactionName === "dislike") ||
-         (authUserReaction === "dislike" && reactionName === "like");
 
-      if (
-         // If user has changed his/her reaction from like <-> dislike, we should first 'remove' the opposite reaction
-         isOppositeReaction
+
+      const isOppositeReaction = (
+         (authUserReaction === 'like' && reactionName === 'dislike')
+         || (authUserReaction === 'dislike' && reactionName === 'like')
+      );
+      
+      
+      if (  // If user has changed his/her reaction from like <-> dislike, we should first 'remove' the opposite reaction
+         isOppositeReaction   
       ) {
-         const oppositeReactionName =
-            reactionName === "like" ? "dislike" : "like";
+         const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
 
          try {
-            await dispatch(
-               removeUserReaction({
-                  userId: authUsername,
-                  postId: postId!,
-                  reactionName: oppositeReactionName,
-               }),
-            );
 
             await dispatch(
-               addUserReaction({
-                  userId: authUsername,
-                  postId: postId!,
-                  reactionName,
-               }),
-            );
+               removeUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId!,
+                     reactionName: oppositeReactionName,
+                  }
+               )
+            )
+
+            await dispatch(
+               addUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId!,
+                     reactionName,
+                  }
+               )
+            )
+   
          } catch (error) {
             console.error(error);
+            let errorMessage = getErrorMessage(error, "Failed to add reaction");
+            toast.error(errorMessage);
          }
       } else {
+
          try {
+   
             await dispatch(
-               addUserReaction({
-                  userId: authUsername,
-                  postId: postId!,
-                  reactionName,
-               }),
-            );
+               addUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId!,
+                     reactionName,
+                  }
+               )
+            )
+   
          } catch (error) {
             console.error(error);
+            let errorMessage = getErrorMessage(error, "Failed to add reaction");
+            toast.error(errorMessage);
          }
       }
+      
    };
 
    // edit

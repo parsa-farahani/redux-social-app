@@ -9,7 +9,6 @@ import ErrorMsg from "../components/common/error/ErrorMsg";
 import { selectAuthUsername } from "../features/auth/authSlice";
 import { selectUserReactions } from "../features/users/usersSlice";
 import PostsBottomOffset from "../components/pages/Posts/PostsBottomOffset";
-import { toast } from "react-toastify";
 import { getErrorMessage } from "../utils/errorUtils/errorUtils";
 import { Box, Button, Fab, Stack } from "@mui/material";
 import { IoMdRefresh } from "react-icons/io";

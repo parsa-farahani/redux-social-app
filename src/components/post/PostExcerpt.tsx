@@ -1,5 +1,6 @@
 import {
    Avatar,
+   Button,
    CardActions,
    CardContent,
    CardHeader,
@@ -20,7 +21,7 @@ import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import PostReactionButton from "./PostReactionButton";
 import { addUserReaction, removeUserReaction } from "../../features/users/usersSlice";
 import { toast } from "react-toastify";
-import React from "react";
+import React, { useState } from "react";
 import { getErrorMessage } from "../../utils/errorUtils/errorUtils";
 
 
@@ -37,6 +38,9 @@ interface PostExcerptProps {
 
 const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReaction }: PostExcerptProps) => {
 
+   // states
+   const [updateReactionStatus, setUpdateReactionStatus] = useState<'idle' | 'pending'>('idle');
+
    // rrd
    const navigate = useNavigate();
 
@@ -46,6 +50,7 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
 
    
    const isAuth = Boolean(authUsername) && (authUsername != null);
+   const isPendingUpdateReaction = updateReactionStatus === 'pending';
 
 
    // + reactions
@@ -55,6 +60,9 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
          navigate("/login");
          return;
       }
+
+
+      setUpdateReactionStatus('pending');
 
       try {
    
@@ -73,6 +81,8 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
 
          let errorMessage = getErrorMessage(error, "Failed to remove reaction");
          toast.error(errorMessage);
+      } finally {
+         setUpdateReactionStatus('idle');
       }
    }
 
@@ -100,8 +110,11 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
       if (  // If user has changed his/her reaction from like <-> dislike, we should first 'remove' the opposite reaction
          isOppositeReaction   
       ) {
+         
          const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
-
+         
+         setUpdateReactionStatus('pending');
+   
          try {
 
             await dispatch(
@@ -128,8 +141,12 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
             console.error(error);
             let errorMessage = getErrorMessage(error, "Failed to add reaction");
             toast.error(errorMessage);
+         } finally {
+            setUpdateReactionStatus('idle');
          }
       } else {
+
+         setUpdateReactionStatus('pending');
 
          try {
    
@@ -147,6 +164,8 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
             console.error(error);
             let errorMessage = getErrorMessage(error, "Failed to add reaction");
             toast.error(errorMessage);
+         } finally {
+            setUpdateReactionStatus('idle');
          }
       }
       
@@ -200,8 +219,11 @@ const PostExcerpt = ({ postId, type = "posts", authUsername = null, authUserReac
             <ViewPostButton
                size="medium"
                variant="outlined"
+               type="button"
+               onClick={() => navigate(`/posts/${post.id}`)}
+               disabled={isPendingUpdateReaction}
             >
-               <Link to={`/posts/${post.id}`}>View Post</Link>
+               View Post
             </ViewPostButton>
             <PostReactionButtonGroup variant="outlined">
                {Object.entries(postReactions).map(([reactionName, emoji]) => (

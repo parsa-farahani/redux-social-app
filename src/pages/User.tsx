@@ -7,10 +7,9 @@ import {
    fetchPostsPending,
    selectPostsError,
    selectPostsStatus,
-   selectUserPosts,
    selectUserPostsIds,
 } from "../features/posts/postsSlice";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
    fetchUser,
    fetchUserReset,
@@ -22,12 +21,9 @@ import {
 import { selectAuthUsername } from "../features/auth/authSlice";
 import PostSkeleton from "../components/loading/skeleton/PostSkeleton";
 import ErrorMsg from "../components/common/error/ErrorMsg";
-import { Avatar, Box, Divider, Skeleton, Stack, Typography } from "@mui/material";
-import { FaUserLarge } from "react-icons/fa6";
-import { pink, red } from "@mui/material/colors";
+import { Divider } from "@mui/material";
 import UserInfoSkeleton from "../components/pages/User/UserInfoSkeleton";
 import UserInfo from "../components/pages/User/UserInfo";
-import { FETCH_USER_PENDING } from "../features/users/constants/actions";
 import { getErrorMessage } from "../utils/errorUtils/errorUtils";
 
 const MemoizedPostExcerpt = React.memo(PostExcerpt);

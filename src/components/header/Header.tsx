@@ -64,11 +64,6 @@ const navLinksData = [
       icon: <MdDangerous />,
    },
    {
-      title: "Test",
-      href: "/test",
-      icon: <BsGear />,
-   },
-   {
       title: "ErrorTest",
       href: "/error-test",
       icon: <BiError />,
