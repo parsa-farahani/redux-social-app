@@ -1,28 +1,22 @@
 import MainPageLayout from "../layouts/MainPageLayout";
 import { useFormik } from "formik";
 import { addPostSchema } from "../validations/addPostValidation";
-import { Box, Button, styled, TextField, useTheme } from "@mui/material";
+import { Box, Button, useTheme } from "@mui/material";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { addPostPending, addPostReset, selectPostsError, selectPostsStatus } from "../features/posts/postsSlice";
+import { useNavigate } from "react-router-dom";
+import { selectAuthUsername } from "../features/auth/authSlice";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
+import { AddPostContentTextField, AddPostTitleTextField } from "./AddPost.styles";
+import { nanoid } from 'nanoid'
+import { getErrorMessage } from "../utils/errorUtils/errorUtils";
 
 
-
-const AddPostTitleTextField = styled(TextField)(({theme}) => ({
-   '& .MuiInputBase-input, & .MuiFormLabel-root': {
-      fontSize: `${theme.typography.h5.fontSize} !important`
-   }
-}));
-
-const AddPostContentTextField = styled(TextField)(({theme}) => ({
-   '& .MuiInputBase-input': {
-      fontSize: `${theme.typography.h6.fontSize} !important`
-   },
-   '& .MuiFormLabel-root': {
-      fontSize: `${theme.typography.h5.fontSize} !important`
-   }
-}));
 
 
 const AddPost = () => {
-   
+
    // Formik
    const addPostInitValues = {
       title: "",
@@ -33,12 +27,73 @@ const AddPost = () => {
       initialValues: addPostInitValues,
       validationSchema: addPostSchema,
       onSubmit: (values) => {
-         console.log(values);
+         handleSubmitPost(values)
       },
    });
 
    // MUI
    const theme = useTheme();
+
+   // rrd
+   const navigate = useNavigate();
+
+   // redux
+   const dispatch = useAppDispatch();
+   const authUsername = useAppSelector(selectAuthUsername);
+   const { addPost: addPostStatus } = useAppSelector(selectPostsStatus);
+   const { addPost: addPostError } = useAppSelector(selectPostsError);
+   
+   const isPendingAddPost = addPostStatus === 'pending';
+   const isSuccessAddPost = addPostStatus === 'succeed';
+   const isErrorAddPost = addPostStatus === 'failed';
+   
+
+   const isAuth = authUsername != null;
+   const canSubmit = (!isPendingAddPost);  // emptiness of inputs are handled by 'formik + yup'
+
+   const isValidFormikValues = formik?.values?.title && formik?.values?.content;
+
+   useEffect(() => {
+      if (isSuccessAddPost) {
+         toast.success("Added successfully!");
+         navigate(`/users/${authUsername}`);
+         dispatch(
+            addPostReset()
+         )
+      }
+      if (isErrorAddPost) {
+         console.error(addPostError);
+         const errorMessage = getErrorMessage(addPostError, 'Failed to add post');
+         toast.error(errorMessage);
+      }
+   }, [isSuccessAddPost, isErrorAddPost, addPostError, navigate, authUsername, isValidFormikValues, dispatch])
+
+
+   const handleSubmitPost = async (formikValues: { title: string; content: string }) => {
+      if (!isAuth) return;
+
+      dispatch(
+         addPostPending({
+            id: nanoid(),
+            title: formikValues.title,
+            content: formikValues.content,
+            userId: authUsername,
+            date: new Date().toISOString(),
+            reactions: {
+               like: 0,
+               dislike: 0,
+            }
+         })
+      );
+   }
+
+
+   useEffect(() => {
+      if (authUsername == null) {
+         navigate('/login');
+      }
+   }, [authUsername, navigate]);
+
 
    return (
       <MainPageLayout title="Add Post">
@@ -51,6 +106,7 @@ const AddPost = () => {
                error={Boolean(formik.touched.title && formik.errors.title)}
                onChange={formik.handleChange}
                fullWidth
+               spellCheck={false}
                variant="standard"
                label="Title"
                margin="normal"
@@ -67,6 +123,7 @@ const AddPost = () => {
                variant="outlined"
                label="Content"
                multiline
+               spellCheck={false}
                margin="normal"
                color="secondary"
                sx={{
@@ -76,8 +133,14 @@ const AddPost = () => {
                }}
             />
             <Box sx={{ marginTop: '1rem' }} >
-               <Button variant="contained" type="submit" color="secondary" sx={{ fontSize: theme.typography.h6.fontSize }} >
-                  Publish Post
+               <Button variant="contained" type="submit" disabled={!canSubmit} color="secondary" sx={{ fontSize: theme.typography.h6.fontSize }} >
+                  {
+                     (isPendingAddPost) ? (
+                        "Loading..."
+                     ) : (
+                        "Publish Post"
+                     )
+                  }
                </Button>
             </Box>
          </form>

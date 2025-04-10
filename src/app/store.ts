@@ -1,31 +1,46 @@
-import type { Action, ThunkAction } from "@reduxjs/toolkit";
-import { combineSlices, configureStore } from "@reduxjs/toolkit";
-import { setupListeners } from "@reduxjs/toolkit/query";
-import settingsSlice from "../features/settings/settingsSlice";
-import { counterSlice } from "../features/counter/counterSlice";
-import { quotesApiSlice } from "../features/quotes/quotesApiSlice";
+import { type Action, applyMiddleware, compose, createStore, type StoreEnhancer } from "redux";
+import { thunk, type ThunkAction } from "redux-thunk";
+import { composeWithDevTools } from 'redux-devtools-extension';
+import rootReducer from "./reducers";
+import createSagaMiddleware from 'redux-saga';
+import rootSaga from "./rootSaga";
+import { createEpicMiddleware } from "redux-observable";
+import { type ObservedActions, rootEpic, type RootStateForEpic } from "./rootEpic";
 
-const rootReducer = combineSlices(
-   settingsSlice,
-   counterSlice,
-   quotesApiSlice
-);
+// Middlewares
+const sagaMiddleware = createSagaMiddleware();
+const epicMiddleware = createEpicMiddleware<ObservedActions, ObservedActions, RootStateForEpic>();
+const middleware = [thunk, sagaMiddleware, epicMiddleware];
 
-export const makeStore = (preloadedState?: Partial<RootState>) => {
-   const store = configureStore({
-      reducer: rootReducer,
-      // middleware: (getDefaultMiddleware) => {
-      //    // return getDefaultMiddleware().concat();
-      // },
-      preloadedState,
-   });
+if (process.env.NODE_ENV === 'development') {
 
-   setupListeners(store.dispatch);
+   // add 'development-only' middlewares here...
+}
 
-   return store;
-};
 
-export const store = makeStore();
+
+// Store Enhancers & Middleware
+const enhancers: StoreEnhancer[] = [];
+
+const composeEnhancers: (...args: StoreEnhancer[]) => StoreEnhancer<any, any> = 
+   process.env.NODE_ENV === 'development'
+   ? composeWithDevTools({ trace: true })
+   : compose
+;
+
+
+const store = createStore(
+   rootReducer,
+   undefined,
+   composeEnhancers(applyMiddleware(...middleware), ...enhancers)
+)
+
+
+epicMiddleware.run(rootEpic);
+sagaMiddleware.run(rootSaga);
+
+export default store;
+
 
 //  --------  Types --------
 export type AppStore = typeof store;
@@ -37,3 +52,9 @@ export type AppThunk<ThunkReturnType = void> = ThunkAction<
    unknown,
    Action
 >;
+
+
+
+store.dispatch({
+   type: 'PING'
+})

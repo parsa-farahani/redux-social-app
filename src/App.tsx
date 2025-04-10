@@ -1,5 +1,5 @@
 // style
-import { Link, Navigate, Route, Routes, useNavigation } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import "./assets/style/App.css";
 import MainMUILayout from "./mui-layouts/MainMUILayout";
 import MainLayout from "./layouts/MainLayout";
@@ -9,21 +9,18 @@ import {
    Users,
    User,
    AddPost,
-   EditPost,
    Login,
-   Test,
    NotFound,
 } from "./pages";
 import { useEffect } from "react";
-import { useAppDispatch } from "./app/hooks";
-import { Fab, useMediaQuery, useTheme } from "@mui/material";
+import { useAppDispatch, useAppSelector } from "./app/hooks";
+import {  useMediaQuery } from "@mui/material";
 import { setDarkMode, setLightMode } from "./features/settings/settingsSlice";
 import PageContainer from "./containers/PageContainer";
-import { title } from "process";
 import ErrorTest from "./pages/ErrorTest";
-import { IoMdAdd } from "react-icons/io";
-import { MdLibraryAdd } from "react-icons/md";
-
+import AuthProtect from "./pages/protect/AuthProtect";
+import { Bounce, ToastContainer } from 'react-toastify';
+import { selectAuthUsername } from "./features/auth/authSlice";
 
 
 
@@ -35,6 +32,7 @@ const App = () => {
 
    // Redux
    const dispatch = useAppDispatch();
+   const authUsername = useAppSelector(selectAuthUsername);
 
    // * changing the dark/light theme based on 'User Preference'
    useEffect(() => {
@@ -45,25 +43,18 @@ const App = () => {
       }
    }, [dispatch, prefersDark]);
 
+   
    return (
       <>
          <MainMUILayout>
             <Routes>
                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<Navigate to="/posts" />} />
+                  <Route index element={<Navigate to={(authUsername == null) ? "/login" : "/posts"} />} />
                   <Route
                      path="/error-test"
                      element={
                         <PageContainer title="Error Test Page">
                            <ErrorTest />
-                        </PageContainer>
-                     }
-                  />
-                  <Route
-                     path="/test"
-                     element={
-                        <PageContainer title="Test Page">
-                           <Test />
                         </PageContainer>
                      }
                   />
@@ -95,15 +86,7 @@ const App = () => {
                      path="/add-post"
                      element={
                         <PageContainer title="Asteroid - add post">
-                           <AddPost />
-                        </PageContainer>
-                     }
-                  />
-                  <Route
-                     path="/edit-post/:postId"
-                     element={
-                        <PageContainer title="Asteroid - edit post">
-                           <EditPost />
+                           <AuthProtect PageComponent={<AddPost />} />
                         </PageContainer>
                      }
                   />
@@ -134,6 +117,17 @@ const App = () => {
                   <Route path="*" element={<Navigate to="/not-found" />} />
                </Route>
             </Routes>
+            <ToastContainer
+               position="top-right"
+               autoClose={3000}
+               newestOnTop={true}
+               closeOnClick={true}
+               pauseOnFocusLoss
+               draggable
+               pauseOnHover
+               theme="colored"
+               transition={Bounce}
+            />
          </MainMUILayout>
       </>
    );

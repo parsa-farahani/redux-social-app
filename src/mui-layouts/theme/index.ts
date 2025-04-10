@@ -38,6 +38,11 @@ const sharedStyles: ThemeOptions = {
       },
    },
    components: {
+      MuiModal: {
+         defaultProps: {
+            disableScrollLock: true,
+         }
+      },
       MuiCssBaseLine: {
          styleOverrides: {
             "@font-face": {
@@ -59,9 +64,20 @@ const sharedStyles: ThemeOptions = {
          styleOverrides: {
             root: {
                textTransform: "none" as const,
+               // '&[disabled]': {
+               //    // opacity: .5,
+               // }
             },
          },
       },
+      MuiDivider: {
+         styleOverrides: {
+            root: {
+               marginTop: '1rem',
+               marginBottom: '1rem',
+            }
+         }
+      }
    } as Components,
 };
 
@@ -84,13 +100,13 @@ export const lightTheme = createTheme({
          secondary: "#202020",
          disabled: "#202020a1",
       },
-      divider: "#000000",
+      divider: "#202020",
       action: {
-         disabledBackground: "#000000",
-         disabledOpacity: 0.3,
-         hoverOpacity: 0.08,
+         disabledBackground: "#55555550",
+         disabledOpacity: 0.5,
+         hoverOpacity: 0.1,
          selectedOpacity: 0.12,
-         disabled: "#000000",
+         disabled: "#11111150",
       },
    },
 });
@@ -114,13 +130,13 @@ export const darkTheme = createTheme({
          secondary: "#ddd",
          disabled: "#bbbbbba1",
       },
-      divider: "#ffffff",
+      divider: "#55555570",
       action: {
-         disabledBackground: "#ffffff",
-         disabledOpacity: 0.3,
-         hoverOpacity: 0.08,
+         disabledBackground: "#55555550",
+         disabledOpacity: 0.5,
+         hoverOpacity: 0.1,
          selectedOpacity: 0.12,
-         disabled: "#ffffff",
+         // disabled: "#ffffff",
       },
    },
 });

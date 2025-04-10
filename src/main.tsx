@@ -4,24 +4,24 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import App from "./App";
-import { store } from "./app/store";
+import store from "./app/store";
 import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ErrorBoundary } from 'react-error-boundary';
-import { logError } from "./utils/errorBoundary/errorBoundaryUtils";
 // style
 import "./assets/style/index.css";
 import AppErrorFallback from "./components/errorBoundary/AppErrorFallback";
 
-const container = document.getElementById("root");
 
+
+const container = document.getElementById("root");
 
 
 if (container) {
    const root = createRoot(container);
 
    root.render(
-      <React.StrictMode>
+      // <React.StrictMode>
          <ErrorBoundary FallbackComponent={AppErrorFallback} >
             <HelmetProvider>
                <BrowserRouter>
@@ -31,7 +31,7 @@ if (container) {
                </BrowserRouter>
             </HelmetProvider>
          </ErrorBoundary>
-      </React.StrictMode>,
+      // </React.StrictMode>,
    );
 } else {
    throw new Error(

@@ -1,237 +1,536 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-   Alert,
-   Avatar,
    Box,
    Button,
-   ButtonGroup,
-   Card,
-   CardActionArea,
-   CardActions,
-   CardContent,
-   CardHeader,
    Divider,
-   IconButton,
-   List,
-   ListItem,
-   Menu,
-   MenuItem,
    Stack,
-   Tooltip,
    Typography,
-   useMediaQuery,
-   useTheme,
 } from "@mui/material";
-import { lightBlue, pink, purple, red } from "@mui/material/colors";
-import { FaUserLarge } from "react-icons/fa6";
-import { MdMoreVert } from "react-icons/md";
-import { MdModeEditOutline } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
-import { useRef, useState } from "react";
-import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import React from "react";
 import { postReactions } from "../constants/postReactions";
 import MainPageLayout from "../layouts/MainPageLayout";
-import { BiCommentDetail, BiSolidCommentDetail } from "react-icons/bi";
-import Comment from "../components/comment/Comment";
+import {
+   deletePostPending,
+   deletePostReset,
+   editPostPending,
+   editPostReset,
+   fetchPostPending,
+   fetchPostReset,
+   selectPostById,
+   selectPostsError,
+   selectPostsStatus,
+} from "../features/posts/postsSlice";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import Spinner from "../components/loading/spinner/Spinner";
+import ErrorMsg from "../components/common/error/ErrorMsg";
+import { PostReactionButtonGroup } from "../components/post/PostExcerpt.styles";
+import PostReactionButton from "../components/post/PostReactionButton";
+import {
+   addUserReaction,
+   removeUserReaction,
+   selectUserReactionByPostId,
+} from "../features/users/usersSlice";
+import { selectAuthUsername } from "../features/auth/authSlice";
+import { useFormik } from "formik";
+import { addPostSchema } from "../validations/addPostValidation";
+import { toast } from "react-toastify";
+import PostComments from "../components/pages/Post/PostComments";
+import PostAuthorBar from "../components/pages/Post/PostAuthorBar";
+import { EditPostContentTextField, EditPostTitleTextField } from "./Post.styles";
+import PostDeletionModal from "../components/pages/Post/PostDeletionModal";
+import PostActions from "../components/pages/Post/PostActions";
+import { getErrorMessage } from "../utils/errorUtils/errorUtils";
 
-const post = {
-   id: "1",
-   title: "Post 1",
-   content: "post 1 content lkdlan alsdlak",
-   userId: "2",
-   date: new Date().toISOString(),
-   reactions: {
-      like: 0,
-      dislike: 0,
-   },
-};
+
+
+const MemoizedPostActions = React.memo(PostActions);
+
 
 const Post = () => {
    // MUI
-   const theme = useTheme();
-   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
    const [optionsMenuAnchorEl, setOptionsMenuAnchorEl] =
       useState<null | HTMLElement>(null);
 
-   const handleOptionsMenu = (event: React.MouseEvent<HTMLElement>) => {
+   const handleOptionsMenu = useCallback((event: React.MouseEvent<HTMLElement>) => {
       setOptionsMenuAnchorEl(event.currentTarget);
-   };
+   }, []);
 
-   const handleCloseOptionsMenu = () => {
+   const handleCloseOptionsMenu = useCallback(() => {
       setOptionsMenuAnchorEl(null);
-   };
+   }, []);
+   
 
    // rrd
    const navigate = useNavigate();
+   const { postId } = useParams();
 
-   return (
-      <MainPageLayout>
-         <Card elevation={0} sx={{ marginBottom: "1rem" }}>
-            <CardActionArea onClick={() => navigate(`/users/${post.userId}`)}>
-               <CardContent sx={{ padding: 1 }}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                     <Avatar sx={{ bgcolor: pink[500], color: "#222" }}>
-                        <FaUserLarge />
-                     </Avatar>
-                     <Box>
-                        <Typography variant="body1" component="h2">
-                           username
-                        </Typography>
-                        <Typography
-                           variant="caption"
-                           component="time"
-                           dateTime={post.date}
-                        >
-                           {new Date(post.date).toLocaleString()}
-                        </Typography>
-                     </Box>
-                  </Stack>
-               </CardContent>
-            </CardActionArea>
-         </Card>
-         <Box sx={{ padding: 1, marginBottom: "3rem" }}>
-            <Stack direction="row">
-               <Typography variant="h4" component="h1" sx={{ flexGrow: "1" }}>
-                  {post.title}
-               </Typography>
-               <ButtonGroup
-                  variant="outlined"
-                  aria-label="Basic button group"
-                  sx={{
-                     marginRight: "1rem",
-                     color: theme.palette.text.secondary,
-                     "& > *": {
-                        color: "inherit !important",
-                        borderColor: "inherit !important",
-                     },
-                     "& *:first-of-type": {
-                        borderRadius: "100vw 0 0 100vw !important",
-                     },
-                     "& *:last-of-type": {
-                        borderRadius: "0 100vw 100vw 0 !important",
-                     },
-                  }}
-               >
-                  {Object.entries(postReactions).map(
-                     ([reactionName, emoji]) => (
-                        <Button
-                           key={reactionName}
-                           size="small"
-                           sx={{
-                              aspectRatio: 1 / 1,
-                              flexShrink: 0,
-                              flexGrow: 0,
-                              padding: 0,
-                              display: "flex",
-                              alignItems: "center",
-                           }}
-                        >
-                           <Typography
-                              variant="h6"
-                              component="span"
-                              sx={{
-                                 display: "inline-flex",
-                                 alignItems: "center",
-                              }}
-                           >
-                              {emoji.normal}
-                           </Typography>
-                        </Button>
-                     ),
-                  )}
-               </ButtonGroup>
-               <Box flexShrink={0}>
-                  {isMdUp ? (
-                     <Stack direction="row" spacing={1}>
-                        <Tooltip title="Edit">
-                           <IconButton
-                              size="medium"
-                              sx={{ color: "text.secondary" }}
-                           >
-                              <MdModeEditOutline />
-                           </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete" >
-                           <IconButton
-                              size="medium"
-                              sx={{ color: "text.secondary" }}
-                           >
-                              <MdDelete />
-                           </IconButton>
-                        </Tooltip>
-                     </Stack>
+   // states
+   const [isEditMode, setIsEditMode] = useState(false);
+
+   const [isOpenDeletionModal, setIsOpenDeletionModal] = useState(false);
+
+   // redux
+   const dispatch = useAppDispatch();
+   const post = useAppSelector((state) => selectPostById(state, postId!));
+   const { fetchPost: fetchPostStatus, editPost: postEditStatus, deletePost: postDeleteStatus } =
+      useAppSelector(selectPostsStatus);
+
+   const postFetchStatus = fetchPostStatus[postId!];
+
+   const {
+      fetchPost: fetchPostError,
+      editPost: postEditError,
+      deletePost: postDeleteError,
+   } = useAppSelector(selectPostsError);
+
+   const postFetchError = fetchPostError[postId!];
+
+   const authUsername = useAppSelector(selectAuthUsername);
+   const authUserReaction =
+      useAppSelector((state) =>
+         selectUserReactionByPostId(state, authUsername!, postId!),
+      ) ?? null;
+
+   
+   const isAuth = Boolean(authUsername) && authUsername != null;
+   const isAuthUserPost = isAuth && authUsername === post?.userId;
+
+   const isSuccessFetchPost = postFetchStatus === "succeed";
+   const isPendingFetchPost = postFetchStatus === "pending";
+   const isFailedFetchPost = postFetchStatus === "failed";
+
+
+   const isSuccessEditPost = postEditStatus === "succeed";
+   const isPendingEditPost = postEditStatus === "pending";
+   const isFailedEditPost = postEditStatus === "failed";
+
+   const isSuccessDeletePost = postDeleteStatus === "succeed";
+   const isPendingDeletePost = postDeleteStatus === "pending";
+   const isFailedDeletePost = postDeleteStatus === "failed";
+
+
+
+   const toggleEditMode = useCallback((newIsEditMode?: boolean) => {
+      if (newIsEditMode != null) {
+         setIsEditMode(newIsEditMode);
+      } else {
+         setIsEditMode((ie) => !ie);
+      }
+   }, []);
+
+
+
+   // + reactions
+   const handleRemoveReaction = async (reactionName: string) => {
+      if (!isAuth) {
+         // If user hasn't logged in yet, we'll send him/her to '/login' page
+         navigate("/login");
+         return;
+      }
+
+      try {
+   
+         await dispatch(
+            removeUserReaction(
+               {
+                  userId: authUsername,
+                  postId: postId!,
+                  reactionName,
+               }
+            )
+         )
+
+      } catch (error) {
+         console.error(error);
+
+         let errorMessage = getErrorMessage(error, "Failed to remove reaction");
+         toast.error(errorMessage);
+      }
+   }
+
+   const handleAddReaction = async (reactionName: string) => {  // We can also use 'extraReducers' to handle actions of other slices in a slice to write such logic, but I kept the logic here for now (because I need to control the order of requests), and maybe I move some of these logics to the 'extraReducers' of a slice!
+      if (!isAuth) {
+         // If user hasn't logged in yet, we'll send him/her to '/login' page
+         navigate("/login");
+         return;
+      }
+
+
+      if ( authUserReaction === reactionName ) {  // Avoiding reactions more than 'once' (just 1 like/dislike per user)
+         handleRemoveReaction(reactionName);
+         return;
+      }
+
+
+
+      const isOppositeReaction = (
+         (authUserReaction === 'like' && reactionName === 'dislike')
+         || (authUserReaction === 'dislike' && reactionName === 'like')
+      );
+      
+      
+      if (  // If user has changed his/her reaction from like <-> dislike, we should first 'remove' the opposite reaction
+         isOppositeReaction   
+      ) {
+         const oppositeReactionName = (reactionName === 'like') ? 'dislike' : 'like';
+
+         try {
+
+            await dispatch(
+               removeUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId!,
+                     reactionName: oppositeReactionName,
+                  }
+               )
+            )
+
+            await dispatch(
+               addUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId!,
+                     reactionName,
+                  }
+               )
+            )
+   
+         } catch (error) {
+            console.error(error);
+            let errorMessage = getErrorMessage(error, "Failed to add reaction");
+            toast.error(errorMessage);
+         }
+      } else {
+
+         try {
+   
+            await dispatch(
+               addUserReaction(
+                  {
+                     userId: authUsername,
+                     postId: postId!,
+                     reactionName,
+                  }
+               )
+            )
+   
+         } catch (error) {
+            console.error(error);
+            let errorMessage = getErrorMessage(error, "Failed to add reaction");
+            toast.error(errorMessage);
+         }
+      }
+      
+   };
+
+   // edit
+   const formik = useFormik({
+      initialValues: {
+         title: post?.title ?? "",
+         content: post?.content ?? "",
+      },
+      validationSchema: addPostSchema,
+      onSubmit: (values) => {
+         handleSubmitEditPost(values);
+      },
+   });
+
+
+   useEffect(() => {
+      if (isSuccessEditPost) {
+         toast.success("Saved successfully!");
+         toggleEditMode();
+         dispatch(
+            editPostReset()
+         )
+      }
+      if (isFailedEditPost) {
+
+         let errorMessage = getErrorMessage(postEditError, "Failed to edit post");
+         toast.error(errorMessage);
+      }
+   }, [navigate, isSuccessEditPost, isFailedEditPost, postEditError, dispatch, toggleEditMode])
+
+   const handleSubmitEditPost = (formikValues: {
+      title: string;
+      content: string;
+   }) => {
+      if (!post) return;
+
+      dispatch(
+         editPostPending({
+            id: postId!,
+            title: formikValues.title,
+            content: formikValues.content,
+            userId: post.userId,
+            reactions: {
+               ...post.reactions,
+            },
+            date: post.date,
+         }),
+      );
+   };
+
+
+   const handleCancelEditPost = useCallback(() => {
+      formik.values.title = post?.title ?? "";
+      formik.values.content = post?.content ?? "";
+      toggleEditMode();
+      handleCloseOptionsMenu();
+   }, [formik?.values, post?.title, post?.content, toggleEditMode, handleCloseOptionsMenu]);
+
+
+   useEffect(() => {
+      if (isSuccessDeletePost) {
+         toast.success("Deleted successfully!");
+         navigate(`/posts`);
+         dispatch(
+            deletePostReset()
+         )
+      }
+      if (isFailedDeletePost) {
+
+         let errorMessage = getErrorMessage(postDeleteError, "Failed to delete post");
+         toast.error(errorMessage);
+      }
+   }, [navigate, isSuccessDeletePost, isFailedDeletePost, postDeleteError, dispatch])
+
+   // delete
+   const handleSubmitDeletePost = () => {
+      dispatch(
+         deletePostPending(postId!)
+      );
+   };
+
+   const handleOpenDeletionModal = useCallback(() => {
+      setIsOpenDeletionModal(true);
+   }, []);
+
+   const handleCloseDeletionModal = () => {
+      setIsOpenDeletionModal(false);
+   };
+
+   const refetchPost = () => {
+      dispatch(
+         fetchPostPending(postId!)
+      );
+   }
+
+   
+   useEffect(() => {
+      if (postFetchStatus && postFetchStatus !== 'idle') return;
+      let ignore = false;
+
+      const fetchPostInEffect = async () => {
+
+         try {
+            await dispatch(
+               fetchPostPending(postId!)
+            );
+         } catch (error) {
+            console.error(error);
+
+
+            let errorMessage = "Failed to Fetch post";
+            if (error instanceof Error) {
+               errorMessage = error.message;
+            } else if (
+               typeof error === "object" &&
+               error !== null &&
+               "message" in error
+            ) {
+               errorMessage = String(error.message);
+            } else if (typeof error === "string") {
+               errorMessage = error;
+            }
+            toast.error(errorMessage);
+         }
+      };
+
+      if (!ignore) {
+         fetchPostInEffect();
+      }
+
+      return () => {
+         ignore = true;
+      };
+   }, [dispatch, postId, postFetchStatus]);
+
+
+   useEffect(() => {
+
+      return () => {
+         dispatch(
+            fetchPostReset(postId!)
+         )
+      }
+   }, [dispatch, postId])
+
+   
+   // Disabling the 'editMode' when we leave this page
+   useEffect(() => {
+      return () => {
+         toggleEditMode(false);
+      };
+   }, [toggleEditMode]);
+
+
+   let postsContent;
+   if (isPendingFetchPost || isPendingDeletePost) {
+      postsContent = (
+         <Spinner
+            text={isPendingFetchPost ? "Loading..." : "Deleting..."}
+            variant="fixed"
+         />
+      );
+   } else if (isSuccessFetchPost && post) {
+      postsContent = (
+         <>
+            { /* this form works with formik to handle edit-post behavior */ }
+            <form
+               id="edit-post-form"
+               noValidate
+               onSubmit={formik.handleSubmit}
+               style={{ display: "hidden" }}
+            ></form>
+            <PostAuthorBar userId={post?.userId} postDate={post.date} />
+            <Box sx={{ minHeight: "60vh", padding: 1, marginBottom: "3rem" }}>
+               <Stack direction="row" alignItems="center">
+                  {!isEditMode ? (
+                     <Typography
+                        variant="h4"
+                        component="h1"
+                        sx={{ flexGrow: "1" }}
+                     >
+                        {post.title}
+                     </Typography>
                   ) : (
-                     <Box>
-                        <IconButton
-                           size="medium"
-                           aria-label="post options"
-                           aria-controls="options-menu"
-                           aria-haspopup="true"
-                           onClick={handleOptionsMenu}
-                        >
-                           <MdMoreVert />
-                        </IconButton>
-                        <Menu
-                           id="options-menu"
-                           anchorEl={optionsMenuAnchorEl}
-                           anchorOrigin={{
-                              vertical: "top",
-                              horizontal: "right",
-                           }}
-                           keepMounted
-                           transformOrigin={{
-                              vertical: "top",
-                              horizontal: "right",
-                           }}
-                           open={Boolean(optionsMenuAnchorEl)}
-                           onClose={handleCloseOptionsMenu}
-                           elevation={2}
-                        >
-                           <MenuItem
-                              onClick={handleCloseOptionsMenu}
-                              sx={{ display: "flex" }}
-                           >
-                              <Typography
-                                 sx={{ marginRight: ".75rem", flexGrow: 1 }}
-                              >
-                                 Edit
-                              </Typography>
-                              <MdModeEditOutline />
-                           </MenuItem>
-                           <MenuItem onClick={handleCloseOptionsMenu}>
-                              <Typography
-                                 sx={{ marginRight: ".75rem", flexGrow: 1 }}
-                              >
-                                 Delete
-                              </Typography>
-                              <MdDelete />
-                           </MenuItem>
-                        </Menu>
-                     </Box>
+                     <EditPostTitleTextField
+                        type="text"
+                        name="title"
+                        value={formik.values?.title}
+                        helperText={formik.touched.title && formik.errors.title}
+                        error={Boolean(
+                           formik.touched.title && formik.errors.title,
+                        )}
+                        onChange={formik.handleChange}
+                        fullWidth
+                        spellCheck={false}
+                        variant="filled"
+                        margin="normal"
+                        // label="Title"
+                        color="secondary"
+                        slotProps={{
+                           htmlInput: {
+                              form: "edit-post-form",
+                           },
+                        }}
+                        disabled={isPendingEditPost}
+                     />
                   )}
-               </Box>
-            </Stack>
-            <Divider
-               sx={{ borderColor: "text.disabled", marginBlock: "1rem" }}
-            />
-            <Typography variant="body1" component="p">
-               {post.content}
-            </Typography>
-         </Box>
-         <Card variant="elevation" elevation={1} sx={{ borderRadius: "1rem" }}>
-            <CardContent sx={{ padding: "1.5rem" }}>
-               <Typography variant="h5" component="h2">
-                  Comments
-               </Typography>
+                  {!isEditMode && (
+                     <PostReactionButtonGroup
+                        variant="outlined"
+                        sx={{ marginRight: "1rem" }}
+                     >
+                        {Object.entries(postReactions).map(
+                           ([reactionName, emoji]) => (
+                              <PostReactionButton
+                                 key={reactionName}
+                                 onAddReaction={(
+                                    e: React.MouseEvent<HTMLElement>,
+                                 ) => handleAddReaction(reactionName)}
+                                 content={
+                                    isAuth && authUserReaction === reactionName
+                                       ? emoji.active
+                                       : emoji.normal
+                                 }
+                                 amount={post.reactions[reactionName]}
+                              />
+                           ),
+                        )}
+                     </PostReactionButtonGroup>
+                  )}
+                  
+                  { /* post actions: edit, delete, ... */ }
+                  <MemoizedPostActions isEditMode={isEditMode} isAuthUserPost={isAuthUserPost} isPendingEditPost={isPendingEditPost} onCancelEditPost={handleCancelEditPost} onToggleEditMode={toggleEditMode} onOpenDeletionModal={handleOpenDeletionModal} optionsMenuAnchorEl={optionsMenuAnchorEl} handleCloseOptionsMenu={handleCloseOptionsMenu} handleOptionsMenu={handleOptionsMenu}  />
+               </Stack>
                <Divider
                   sx={{ borderColor: "text.disabled", marginBlock: "1rem" }}
                />
-               <Stack direction="column" rowGap={2}>
-                  <Comment />
-                  <Comment />
-               </Stack>
-            </CardContent>
-         </Card>
+               {!isEditMode ? (
+                  <pre>
+                     <Typography variant="body1" component="p">
+                        {
+                           post.content
+                        }
+                     </Typography>
+                  </pre>
+               ) : (
+                  <>
+                     <EditPostContentTextField
+                        type="text"
+                        name="content"
+                        value={formik.values?.content}
+                        helperText={
+                           formik.touched.content && formik.errors.content
+                        }
+                        error={Boolean(
+                           formik.touched.content && formik.errors.content,
+                        )}
+                        onChange={formik.handleChange}
+                        fullWidth
+                        spellCheck={false}
+                        variant="filled"
+                        margin="normal"
+                        // label="Content"
+                        color="secondary"
+                        multiline
+                        slotProps={{
+                           htmlInput: {
+                              form: "edit-post-form",
+                           },
+                        }}
+                        disabled={isPendingEditPost}
+
+                     />
+                  </>
+               )}
+            </Box>
+            {/* Deletion of the Post */}
+            <PostDeletionModal isOpen={isOpenDeletionModal} onClose={handleCloseDeletionModal} onSubmit={handleSubmitDeletePost} />
+            {/* Comments */}
+            <Box component="section">
+               <PostComments postId={postId!} />
+            </Box>
+         </>
+      );
+   } else if (isFailedFetchPost) {
+      postsContent = (
+         <Stack direction="column" spacing={1} >
+            <Box >
+               <ErrorMsg text={postFetchError?.toString() ?? "Unknown Erorr"} />
+            </Box>
+            <Button
+               variant="contained"
+               onClick={refetchPost}
+               sx={{ width: 'fit-content', bgcolor: 'secondary.dark', borderRadius: '100vw' }}
+            >
+               Try Again
+            </Button>
+         </Stack>
+      );
+   } else {
+      postsContent = <ErrorMsg text="404 - Not Found the Post!" />;
+   }
+
+   return (
+      <MainPageLayout>
+         {
+            postsContent
+         }
       </MainPageLayout>
    );
 };

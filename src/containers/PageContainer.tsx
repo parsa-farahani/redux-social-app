@@ -1,31 +1,24 @@
-import React from "react";
-import { Box, Fab, useTheme } from "@mui/material";
+import type React from "react";
+import { Box, Container } from "@mui/material";
 import { Helmet } from 'react-helmet-async';
-import { Link, useLocation } from "react-router-dom";
-import { MdLibraryAdd } from "react-icons/md";
+import { useLocation } from "react-router-dom";
+import AddPostFab from "../components/pages/AddPost/AddPostFab";
+import { useAppSelector } from "../app/hooks";
+import { selectAuthUsername } from "../features/auth/authSlice";
 
 interface PageContainerProps {
    children: React.ReactNode;
    title: string;
 }
 
-let AddPostFab = React.memo(
-   () => {
-
-      return (
-         <Fab size="large" color="primary" aria-label="add" sx={{ bgcolor: "primary.light", fontSize: '1.2rem', position: 'fixed', zIndex: 99, left: '50%', bottom: '4rem', width: '70px', height: '70px' }}>
-            <Link to='/add-post' style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: '1.8rem' }} >
-               <MdLibraryAdd />
-            </Link>
-         </Fab>
-      )
-   }
-)
 
 const PageContainer = ( { children, title }: PageContainerProps ) => {
    
    // rrd
    const location = useLocation();
+
+   // redux
+   const authUsername = useAppSelector(selectAuthUsername);
 
    
    return (
@@ -46,13 +39,15 @@ const PageContainer = ( { children, title }: PageContainerProps ) => {
                children
             }
          </Box>
-         {
-            (!location.pathname.includes('/add-post')) ? (
-               <AddPostFab />
-            ) : (
-               null
-            )
-         }
+         <Container maxWidth="xl" sx={{ position: 'fixed', bottom: '0', left: '50%', transform: 'translateX(-50%)' }}>
+            {
+               (!location.pathname.includes('/add-post') && authUsername) ? (
+                  <AddPostFab />
+               ) : (
+                  null
+               )
+            }
+         </Container>
       </>
    );
 }
