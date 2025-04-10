@@ -17,6 +17,9 @@
 
 
 
+## Screenshots
+![Project Screenshot](./screenshots/sc1.png)
+
 
 ## Technologies Used:
   - React (+ React-Router-DOM)
