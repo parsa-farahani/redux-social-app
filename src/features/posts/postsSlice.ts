@@ -117,12 +117,13 @@ const postsSlice = createSlice({
       .addMatcher(
          (action) => {
             return (
-               ['fetchPosts', 'editPost', 'addPost', 'deletePost'].includes(action.type.slice(0, action.type.indexOf('/'))) &&
-               action.type.slice(action.type.indexOf('/') + 1) === 'pending'
+               action.type.slice(action.type.lastIndexOf('/') + 1) === 'pending' &&
+               action.type.slice(0, action.type.indexOf('/')) === 'posts' &&
+               ['fetchPosts', 'fetchPost', 'editPost', 'addPost', 'deletePost'].includes(action.type.slice('posts/'.length, action.type.lastIndexOf('/')))
             )
          },
          (state, action) => {
-            const op = action.type.slice(0, action.type.indexOf('/'));
+            const op = action.type.slice('posts/'.length, action.type.lastIndexOf('/'));
             state.status[op] = 'pending';
          } 
       )
@@ -143,27 +144,27 @@ const postsSlice = createSlice({
 
 
 // Thunks
-export const fetchPosts = createAsyncThunk('fetchPosts', async () => {
+export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
    const response = await getPostsServer();
    return response.data;
 });
 
-export const fetchPost = createAsyncThunk('fetchPost', async (postId: string) => {
+export const fetchPost = createAsyncThunk('posts/fetchPost', async (postId: string) => {
    const response = await getPostServer(postId);
    return response.data;
 });
 
-export const addPost = createAsyncThunk('addPost', async (post: Post) => {
+export const addPost = createAsyncThunk('posts/addPost', async (post: Post) => {
    const response = await addPostServer(post);
    return response.data;
 });
 
-export const editPost = createAsyncThunk('editPost', async (post: Post) => {
+export const editPost = createAsyncThunk('posts/editPost', async (post: Post) => {
    const response = await updatePostServer(post, post.id);
    return response.data;
 });
 
-export const deletePost = createAsyncThunk('deletePost', async (postId: string) => {
+export const deletePost = createAsyncThunk('posts/deletePost', async (postId: string) => {
    await deletePostServer(postId);
    return postId;
 });

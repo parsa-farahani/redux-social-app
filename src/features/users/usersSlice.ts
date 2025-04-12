@@ -80,16 +80,18 @@ const usersSlice = createSlice({
       })
       .addCase(fetchUser.fulfilled, (state, action) => {
          usersAdapter.setOne(state, action.payload);
+         state.status['fetchUser'] = 'succeed';
       })
       .addMatcher(
          (action) => {
             return (
-               ['fetchUsers', 'editUser', 'addUser', 'deleteUser'].includes(action.type.slice(0, action.type.indexOf('/'))) &&
-               action.type.slice(action.type.indexOf('/') + 1) === 'pending'
+               action.type.slice(action.type.lastIndexOf('/') + 1) === 'pending' &&
+               action.type.slice(0, action.type.indexOf('/')) === 'users' &&
+               ['fetchUsers', 'fetchUser'].includes(action.type.slice('users/'.length, action.type.lastIndexOf('/')))
             )
          },
          (state, action) => {
-            const op = action.type.slice(0, action.type.indexOf('/'));
+            const op = action.type.slice('users/'.length, action.type.lastIndexOf('/'));
             state.status[op] = 'pending';
          } 
       )
@@ -110,12 +112,12 @@ const usersSlice = createSlice({
 
 
 // Thunks
-export const fetchUsers = createAsyncThunk('fetchUsers', async () => {
+export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
    const response = await getUsersServer();
    return response.data;
 });
 
-export const fetchUser = createAsyncThunk('fetchUser', async (userId: string) => {
+export const fetchUser = createAsyncThunk('users/fetchUser', async (userId: string) => {
    const response = await getUserServer(userId);
    return response.data;
 });
@@ -242,13 +244,6 @@ export const selectUserReactionByPostId = createSelector(  // args: state, userI
    (state: RootState, userId: string, postId: string) => postId,
    (reactions, postId) => reactions[postId]
 )
-
-// export const selectUserReactions = (state: RootState, userId: string) => {
-//    const user = selectUserById(state, userId);
-//    if (!user) return {};
-//    return user.reactions;
-// } 
-
 
 
 

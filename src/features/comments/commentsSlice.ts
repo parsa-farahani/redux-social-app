@@ -74,12 +74,13 @@ const commentsSlice = createSlice({
       .addMatcher(
          (action) => {
             return (
-               ['fetchComments', 'editComment', 'addComment', 'deleteComment'].includes(action.type.slice(0, action.type.indexOf('/'))) &&
-               action.type.slice(action.type.indexOf('/') + 1) === 'pending'
+               action.type.slice(action.type.lastIndexOf('/') + 1) === 'pending' &&
+               action.type.slice(0, action.type.indexOf('/')) === 'comments' &&
+               ['fetchComments', 'editComment', 'addComment', 'deleteComment'].includes(action.type.slice('comments/'.length, action.type.lastIndexOf('/')))
             )
          },
          (state, action) => {
-            const op = action.type.slice(0, action.type.indexOf('/'));
+            const op = action.type.slice('comments/'.length, action.type.lastIndexOf('/'));
             state.status[op] = 'pending';
          } 
       )
@@ -101,22 +102,22 @@ const commentsSlice = createSlice({
 
 
 // Thunks
-export const fetchComments = createAsyncThunk('fetchComments', async () => {
+export const fetchComments = createAsyncThunk('comments/fetchComments', async () => {
    const response = await getCommentsServer();
    return response.data;
 });
 
-export const addComment = createAsyncThunk('addComment', async (comment: Comment) => {
+export const addComment = createAsyncThunk('comments/addComment', async (comment: Comment) => {
    const response = await addCommentServer(comment);
    return response.data;
 });
 
-export const editComment = createAsyncThunk('editComment', async (comment: Comment) => {
+export const editComment = createAsyncThunk('comments/editComment', async (comment: Comment) => {
    const response = await updateCommentServer(comment, comment.id);
    return response.data;
 });
 
-export const deleteComment = createAsyncThunk('deleteComment', async (commentId: string) => {
+export const deleteComment = createAsyncThunk('comments/deleteComment', async (commentId: string) => {
    const response = await deleteCommentServer(commentId);
    return response.data;
 });

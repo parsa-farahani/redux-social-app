@@ -337,16 +337,19 @@ const Post = () => {
 
 
    let postsContent;
-   if (!post) {
-      postsContent = <ErrorMsg text="404 - Not Found the Post" />;
-   } else if (isPendingFetchPost || isPendingDeletePost) {
+   /*
+      if (!post) {
+         postsContent = <ErrorMsg text="404 - Not Found the Post" />;
+      } else 
+   */
+   if (isPendingFetchPost || isPendingDeletePost) {
       postsContent = (
          <Spinner
             text={isPendingFetchPost ? "Loading..." : "Deleting..."}
             variant="fixed"
          />
       );
-   } else if (isSuccessFetchPost) {
+   } else if (isSuccessFetchPost && post) {
       postsContent = (
          <>
             { /* this form works with formik to handle edit-post behavior */ }

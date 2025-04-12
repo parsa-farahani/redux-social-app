@@ -7,8 +7,6 @@ import postsSlice from "../features/posts/postsSlice";
 import commentsSlice from "../features/comments/commentsSlice";
 import settingsSlice from "../features/settings/settingsSlice";
 import { listenerMiddleware } from "./listenerMiddleware";
-// import { counterSlice } from "../features/counter/counterSlice";
-// import { quotesApiSlice } from "../features/quotes/quotesApiSlice";
 
 const rootReducer = combineSlices(
    authSlice,
@@ -16,8 +14,6 @@ const rootReducer = combineSlices(
    postsSlice,
    commentsSlice,
    settingsSlice,
-   // counterSlice,
-   // quotesApiSlice
 );
 
 export const makeStore = (preloadedState?: Partial<RootState>) => {
