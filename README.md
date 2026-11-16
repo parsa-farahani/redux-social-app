@@ -1,4 +1,4 @@
-# Asteroid - social app (Redux Core)
+# Asteroid - social app
   
 A front-end social-media app (think of a small weblog) where users can sign in, create, edit and delete posts, comment on other people's posts, and react with likes and dislikes.
 
