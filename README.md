@@ -1,53 +1,72 @@
-# Asteroid - social app (Redux-Toolkit + Async-Thunk)
+# Asteroid - social app (Redux Core)
+  
+A front-end social-media app (think of a small weblog) where users can sign in, create, edit and delete posts, comment on other people's posts, and react with likes and dislikes.
 
-  This is a simple and tiny social-media app (something like a weblog) that users can log-in, add post, edit/delete their posts, add comments on people's posts, react to posts (like/dislike). (this is just a 'front-end' implementation, and it is not a complete, production-ready app. I just intended to show my skills to create an app using 4 technologies: React, Redux, TS, MUI, and also some important packages/libraries)
+I built Asteroid to compare **three different Redux architectures** on the same app, so the same features are implemented three times, one per branch.
 
-
-
-## Technologies Used:
-  - React (+ React-Router-DOM)
-  - Redux
-  - TypeScript
-  - Material UI 
+> This README and repo are for the **`rtk - async-thunk`** version.
 
 
 
-## pakcages used for react:
+## Features
 
-- React
-react(^18.2.0)
-react-dom(18.2.0)
-
-- Redux
-@reduxjs/toolkit
-react-redux
-react-helmet-async
-
-- Material UI
-@emotion/react
-@emotion/styled
-@mui/material
+- Sign in with form validation
+- Create, edit and delete your own posts
+- Comment on posts
+- Like and dislike posts
+- Toast notifications and error boundaries for failed requests
+- Page titles managed per route
 
 
-- Routing
-react-router-dom
 
 
-- data-fetch requests
-axios
+## Three Architectures, One App
+
+| Branch | State management | Server requests / side effects |
+| --- | --- | --- |
+| [`redux-core`](https://github.com/parsa-farahani/REPO-NAME/tree/redux-core) | Redux (classic) | Redux-Saga for requests, Redux-Observable for listeners |
+| [`rtk/async-thunk`](https://github.com/parsa-farahani/REPO-NAME/tree/rtk/async-thunk) | Redux Toolkit | `createAsyncThunk` |
+| [`rtk/rtk-query`](https://github.com/parsa-farahani/REPO-NAME/tree/rtk/rtk-query) | Redux Toolkit | RTK Query |
 
 
-- Form-operations/validations
-"formik": "^2.4.6",
-"yup": "^1.6.1"
+
+## Tech Stack
+
+| Area | Tools |
+| --- | --- |
+| UI | React 18, Material UI (`@mui/material`, Emotion) |
+| Language | TypeScript |
+| State | Redux, Redux-Saga, Redux-Observable (RxJS), React-Redux |
+| Routing | React Router DOM |
+| Forms | Formik + Yup |
+| Data fetching | Axios |
+| Feedback | React-Toastify, MUI Snackbar, React Error Boundary |
+| Other | React Helmet Async, React Icons |
 
 
-- Icons
-react-icons
 
 
-- Toast
-react-toastify
+## Getting Started
 
-- Error-Boundary
-react-error-boundary
+**Prerequisites:** Node.js 18 or newer
+
+```bash
+# 1. Clone the repository and switch to this branch
+git clone https://github.com/parsa-farahani/redux-social-app.git
+cd redux-social-app
+git checkout redux-core
+
+# 2. Install dependencies (root and server)
+npm install
+cd server && npm install && cd ..
+
+# 3. Start the app
+npm start
+```
+
+Then open the URL that Vite prints in the terminal (by default [http://localhost:5173](http://localhost:5173)).
+
+> **Note:** the app needs its API to work. The back end is a [json-server](https://github.com/typicode/json-server) mock API that lives in the `server/` folder, and it **must be running** while you use the app.
+>
+> `npm start` already handles this: it uses [`concurrently`](https://github.com/open-cli-tools/concurrently) to launch the Vite dev server and the json-server API together. If you only run `npm run dev`, the front end starts alone and requests will fail, so start the server yourself with `cd server && npm start`.
+
